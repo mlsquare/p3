@@ -4,7 +4,9 @@
 # ## Chapter 01  - Dogs: loglinear model for binary data
 # 
 # 
-# **Background:** Solomon-Wynne in 1953 conducted an experiment on avoidance learning in dogs from traumatic experiences in past such as those from electric shocks.
+# **Background:** 
+# 
+# Solomon-Wynne in 1953 conducted an experiment on avoidance learning in dogs from traumatic experiences in past such as those from electric shocks.
 # The apparatus of experiment holds a dog in a closed compartment with steel flooring, open on side with a small barrier for dog to jump over to the other side. A high-voltage electric shock is discharged into the steel floor intermittently to stimulate the dog; Thus the dog is effectively left with an option to either get the shock for that trial or jump over the barrier to other side & save himself. Several dogs were subjected to similar experiment for many consecutive trials.
 # This picture elicits the apparatus
 # 
