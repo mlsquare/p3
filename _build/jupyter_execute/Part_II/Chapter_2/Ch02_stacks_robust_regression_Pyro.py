@@ -46,7 +46,7 @@ plt.style.use('default')
 # 
 # **sigmasq ~ inv_gamma(.001, .001);**
 
-# In[2]:
+# In[5]:
 
 
 def StackModel(X1, X2, X3, Y):
@@ -63,7 +63,7 @@ def StackModel(X1, X2, X3, Y):
 
 # **Following standardises Data**
 
-# In[3]:
+# In[6]:
 
 
 transform_data= lambda x:torch.tensor(stats.zscore(x), dtype=torch.float)# standardises Input data
@@ -84,7 +84,7 @@ Y= y_data
 print(X1.shape, X2.shape, X3.shape, Y.shape)
 
 
-# In[4]:
+# In[7]:
 
 
 def get_hmc_n_chains(num_chains=4, base_count = 900):
@@ -105,7 +105,7 @@ def get_hmc_n_chains(num_chains=4, base_count = 900):
     return hmc_sample_chains
 
 
-# In[5]:
+# In[6]:
 
 
 hmc_sample_chains= get_hmc_n_chains(num_chains=4, base_count = 900)

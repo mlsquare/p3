@@ -8,7 +8,8 @@ logo: ppyro_logo.gif
 # Force re-execution of notebooks on each build.
 # See https://jupyterbook.org/content/execute.html
 execute:
-  execute_notebooks: force
+  execute_notebooks: 'off'
+  # timeout: -1
 
 # Define the name of the latex output file for PDF builds
 latex:
@@ -24,6 +25,12 @@ repository:
   url: https://github.com/mlsquare/p3  # Online location of your book
   # path_to_book: docs # Optional path to your book, relative to the repository root
   branch: master  # Which branch of the repository should be used when creating links (optional)
+
+#enable plotly visualizations
+sphinx:
+  config:
+    html_js_files:
+    - https://cdnjs.cloudflare.com/ajax/libs/require.js/2.3.4/require.min.js
 
 parse:
   myst_enable_extensions:

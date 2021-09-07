@@ -9,7 +9,7 @@ parts:
     - file: Part_I/Chapter_1
   - caption: Part II
     chapters:
-    - file: Part_II/Chapter_1/md_files/Ch01_dogs_log_linear_Pyro
+    - file: Part_II/Chapter_1/Ch01_dogs_log_linear_Pyro
     - file: Part_II/Chapter_2/Ch02_stacks_robust_regression_Pyro
   - caption: Part III
     chapters:
