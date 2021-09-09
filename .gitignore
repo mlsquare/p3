@@ -7,3 +7,5 @@ Part_III/**/*.DS_Store
 Part_II/*.DS_Store
 .ipynb_checkpoints
 .ipynb_checkpoints/
+Part_II/**/*.pyc
+Part_II/**/__pycache__
