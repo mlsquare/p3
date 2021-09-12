@@ -27,6 +27,36 @@ import plotly.figure_factory as ff
 class base(object):
     def __init__(self):
         pass
+
+    @staticmethod
+    def plot_original_y(original_obs,ylabel=None):
+            """
+            
+            Input
+            -------
+            original_obs: original observations/ labels from given data
+
+            returns  plotly scatter plots with number of trials on X axis & corresponding probability of getting
+            shocked for each pair of (alpha, beta) passed in 'selected_pairs_list'.
+            
+            Output
+            --------
+            Plots scatter plot of all observed values of y corresponding to each given pair of alpha, beta
+
+            """
+            obs_column_names = [f'Dog_{ind+1}'for ind in range(base.load_data()["Ndogs"])]
+            obs_y_df= pd.DataFrame(original_obs.T, columns=obs_column_names)
+            
+            if ylabel is None:
+                ylabel = "Probability of shock at trial j (𝜋𝑗)"
+
+            obs_y_title= "Original observed values distribution for all dogs"
+            fig = px.scatter(obs_y_df, title=obs_y_title)
+            fig.update_layout(title=obs_y_title, xaxis_title="Trials", yaxis_title=ylabel, legend_title="Dog identifier")
+            fig.show()
+    
+
+
     @staticmethod
     def DogsModel(x_avoidance, x_shocked, y):
         """
