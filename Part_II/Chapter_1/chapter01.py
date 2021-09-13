@@ -23,6 +23,11 @@ from pyro.infer import MCMC, NUTS
 import plotly
 import plotly.express as px
 import plotly.figure_factory as ff
+import ipywidgets as widgets
+from IPython.display import display, clear_output
+
+
+slide_counter=0
 
 class base(object):
     def __init__(self):
@@ -304,6 +309,89 @@ class base(object):
             plt.title(f'{param1} Vs. {param2}')
             plt.show()
 
+    @staticmethod
+    def summary(beta_chain_matrix_df):
+        reset_slider= lambda x: reset_slider_main()
+
+        def reset_slider_main():
+            clear_output()
+            slider.observe(slider_eventhandler, names='value')
+            display(slider)
+
+
+        def slider_eventhandler(tick):
+            global slide_counter
+            if tick.owner.value=="View 1":
+                slide_counter+=1
+                print("Use 'Shift / Ctrl or Cmd' + Arrow keys to select")
+                select_multiple= widgets.SelectMultiple(options=["mean", "std", "25%", "50%", "75%"],
+                                                        value=["mean"], description='Summarise', disabled=False)
+                select_multiple_output = widgets.Output()
+
+                def select_multiple_eventhandler(change):
+                    select_multiple_output.clear_output()
+                    with select_multiple_output:
+                        display(base.summary_stats_df(beta_chain_matrix_df, list(change.owner.value)))
+
+                select_multiple.observe(select_multiple_eventhandler, names='value')
+                display(select_multiple)
+                display(select_multiple_output)
+            elif tick.owner.value=="View 2":
+                slide_counter+=1
+                print("Select any value")
+                dropdown = widgets.Dropdown(options =["mean", "std", "25%", "50%", "75%", "ALL"])
+                dropdown_output = widgets.Output()
+                def dropdown_eventhandler(change):
+                    dropdown_output.clear_output()
+                    with dropdown_output:
+                        if (change.new == "ALL"):
+                            display(base.summary_stats_df(beta_chain_matrix_df, ["mean", "std", "25%", "50%", "75%"]))
+                        else:
+                            display(base.summary_stats_df(beta_chain_matrix_df, [change.new]))#summary_stats_df_[summary_stats_df_ == change.new])
+
+                dropdown.observe(dropdown_eventhandler, names='value')
+                display(dropdown)
+                display(dropdown_output)
+            else:
+                clear_output()
+                print("Results cleared!")
+                slide_counter=0
+                reset_button.icon = "hourglass-half"#"battery-half"#"hourglass-half"#
+                reset_button.button_style='warning'
+                display(reset_button)
+            if slide_counter>3:
+                clear_output()
+                print("Attempts Exhausted!")
+                slide_counter=0
+                reset_button.icon = "hourglass-end"#"battery-empty"#"hourglass-end"#
+                reset_button.button_style='danger'
+                display(reset_button)
+
+
+        reset_button = widgets.Button(
+            description='Show slider',
+            disabled=False,
+            button_style='warning',
+            tooltip='reset',
+            icon="hourglass-half"#"battery-half"
+        )
+        reset_button.on_click(reset_slider)
+
+        slider = widgets.SelectionSlider(
+            options=['View 1', 'View 2', 'Clear'],
+            value='View 1',
+            description='Slide to',
+            disabled=False,
+            continuous_update=False,
+            orientation='horizontal',
+            readout=True
+        )
+        slider_output = widgets.Output()
+
+        slider.observe(slider_eventhandler, names='value')
+        display(slider)
+
+    
     @staticmethod
     def plot_chains(param_chain_matrix_df):
         """
