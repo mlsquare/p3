@@ -30,30 +30,31 @@ class base(object):
 
     @staticmethod
     def plot_original_y(original_obs,ylabel=None):
-            """
-            
-            Input
-            -------
-            original_obs: original observations/ labels from given data
+        """
 
-            returns  plotly scatter plots with number of trials on X axis & corresponding probability of getting
-            shocked for each pair of (alpha, beta) passed in 'selected_pairs_list'.
-            
-            Output
-            --------
-            Plots scatter plot of all observed values of y corresponding to each given pair of alpha, beta
+        Input
+        -------
+        original_obs: original observations/ labels from given data
 
-            """
-            obs_column_names = [f'Dog_{ind+1}'for ind in range(base.load_data()["Ndogs"])]
-            obs_y_df= pd.DataFrame(original_obs.T, columns=obs_column_names)
-            
-            if ylabel is None:
-                ylabel = "Probability of shock at trial j (𝜋𝑗)"
+        returns  plotly scatter plots with number of trials on X axis & corresponding probability of getting
+        shocked for each pair of (alpha, beta) passed in 'selected_pairs_list'.
 
-            obs_y_title= "Original observed values distribution for all dogs"
-            fig = px.scatter(obs_y_df, title=obs_y_title)
-            fig.update_layout(title=obs_y_title, xaxis_title="Trials", yaxis_title=ylabel, legend_title="Dog identifier")
-            fig.show()
+        Output
+        --------
+        Plots scatter plot of all observed values of y corresponding to each given pair of alpha, beta
+
+        """
+        num_dogs = base.load_data()["Ndogs"] if original_obs.ndim!=1 else 1
+        obs_column_names = [f'Dog_{ind+1}' for ind in range(num_dogs)] if num_dogs!=1 else ["Dogs"]
+        obs_y_df= pd.DataFrame(original_obs.T, columns=obs_column_names)
+
+        if ylabel is None:
+            ylabel = "Probability of shock at trial j (𝜋𝑗)"
+
+        obs_y_title= "Original observed value distribution for all dogs"
+        fig = px.scatter(obs_y_df, title=obs_y_title)
+        fig.update_layout(title=obs_y_title, xaxis_title="Trials", yaxis_title=ylabel, legend_title="Dog identifier")
+        fig.show()
     
 
 
@@ -303,6 +304,27 @@ class base(object):
             plt.title(f'{param1} Vs. {param2}')
             plt.show()
 
+    @staticmethod
+    def plot_chains(param_chain_matrix_df):
+        """
+        Input
+        -------
+        param_chain_matrix_df: Dataframe holding samples of parameters (alpha & beta)
+                            with parameter names across rows chain names across columns.
+        
+        Output
+        -------
+        Plot intermixing chains for each parameter.
+
+        """
+        for param in param_chain_matrix_df.index:
+            plt.figure(figsize=(10,8))
+            for chain in param_chain_matrix_df.columns:
+                plt.plot(param_chain_matrix_df.loc[param, chain], label=chain)
+                plt.legend()
+            plt.title("Chain intermixing for '%s' samples"%param)
+            plt.show()
+    
     @staticmethod
     def hexbin_plot(x, y, x_label, y_label):
         """
