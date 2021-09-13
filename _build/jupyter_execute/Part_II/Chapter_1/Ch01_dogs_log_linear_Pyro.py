@@ -1,39 +1,48 @@
 #!/usr/bin/env python
 # coding: utf-8
 
-# ## Chapter 01  - Dogs: loglinear model for binary data
+# ## Chapter 01: Log-Linear Model
 # 
 # 
-# **Background:** 
+# ### 1. Introduction
 # 
-# Solomon-Wynne in 1953 conducted an experiment on avoidance learning in dogs from traumatic experiences in past such as those from electric shocks.
-# The apparatus of experiment holds a dog in a closed compartment with steel flooring, open on side with a small barrier for dog to jump over to the other side. A high-voltage electric shock is discharged into the steel floor intermittently to stimulate the dog; Thus the dog is effectively left with an option to either get the shock for that trial or jump over the barrier to other side & save himself. Several dogs were subjected to similar experiment for many consecutive trials.
-# This picture elicits the apparatus
+# Solomon-Wynne in 1953 conducted an experiment on Dogs. He wanted to understand, whether Dogs can learn from mistakes, so to speak; Specifically, he was interested in _avoidance-learning_. That is, when Dogs are given trauma-inducing shocks, will they learn to avoid shocks in future?
 # 
+# We can state the objectives of the expeirment, according to our understanding, in more general terms as follows:
+# 
+# 1. Can the Dogs learn?
+# 2. Can they retain & recollect what they learnt?
+# 
+# The experimental setup, to drive the objectives, holds a dog in a closed compartment with steel flooring, open on one side with a small barrier for dog to jump over to the other side. A high-voltage electric shock is discharged into the steel floor intermittently to stimulate the dog. The dog is then left with an option to either get the shock for that trial or jump over the barrier to other side & save himself. Several dogs were recruited in the experiment.
+# 
+# The following picture is an illustration of the setup.
+# <br>
+# <br>
 # ![dog_setup](./data/avoidance_learning.png)
-# 
-# The elaborate details of the experiment can be found at
-# http://www.appstate.edu/~steelekm/classes/psy5300/Documents/Solomon&Wynne%201953.pdf
-# 
-# The hypothesis is that most of the dogs learnt to avoid shocks by jumping over barrier to the other side after suffering the trauma of shock in previous trials. That inturn sustain dogs in future encounters with electric shocks.
+# <br>
+# <br>
+# More details of the experiment can be found [here](http://www.appstate.edu/~steelekm/classes/psy5300/Documents/Solomon&Wynne%201953.pdf)
+# <br>
+# <br>
 
-# Since the experiment aims to study the avoidance learning in dogs from past traumatic experiences and reach a plausible model where dogs learn to avoid scenerios responsible for causing trauma, we describe the phenomenon using expression
-# $$
-# \pi_j   =   A^{xj} B^{j-xj}
-# $$
-# Where :
+# In this chapter, we will analyze the experimental data using 'Bayesian Analysis', and the inference will be carried out in Pyro. The organization of the notebook is inspired from [Bayesian Workflow](http://www.stat.columbia.edu/~gelman/research/unpublished/Bayesian_Workflow_article.pdf) by Prof. Andrew Gelman et al. Another piece of work in that direction is from Betoncourt et al [here](https://arxiv.org/abs/1904.12765). However, the current analysis is a WIP and far from perfect.
+# 
+# 
+# An almost always first step in Bayesian Analysis is to elicit a pluasible generative model, that would have likely generated the observed data. In this case, consider the model suggesed/implemented in WinBUGs [Vol1](https://www.mrc-bsu.cam.ac.uk/wp-content/uploads/WinBUGS_Vol1.pdf).
+# 
+# We want to model the relationship between __avoidance-in-future__ and past traumatic experiences. The following log-linear model is a starting point:
+# <br>
+# <br>
+# $\pi_j   =   A^{xj} B^{j-xj} $
+# <br>
+# <br>
+# where :
 #    * $\pi_j$ is the probability of a dog getting shocked at trial $j$
-#    * A & B both are random variables drawing values from Normal distribution
 #    * $x_j$ is number of successful avoidances of shock prior to trial $j$.
 #    * $j-x_j$ is number of shocks experienced prior to trial $j$.
-# In the subsequent 
+#    * A & B both are unknown and treated as random variables
 # 
-# The hypothesis is thus corroborated by Bayesian modelling and comprehensive analysis of dogs data available from Solomon-Wynne experiment in Pyro.
-# 
-
-# The data is analysed step by step in accordance with Bayesian workflow as described in "Bayesian Workflow", Prof. Andrew Gelman [http://www.stat.columbia.edu/~gelman/research/unpublished/Bayesian_Workflow_article.pdf].
-# 
-# Import following dependencies.
+# However, the model is only partially complete. In a Bayesian setting, we need to elicit our prior beliefs about the unknowns. Consequently, we need to give priors to $A$ and $B$, which we do shortly. Before that, we need some boiler plate code, mostly `imports`. Note that, all the code (functions) are glued in the [base](https://github.com/mlsquare/p3/blob/p3_part_2_ch01/Part_II/Chapter_1/chapter01.py) class. If one is interested, they can always browse the code repo to get better understanding.
 
 # In[1]:
 
@@ -52,97 +61,113 @@ import plotly.figure_factory as ff
 from chapter01 import base
 import numpy as np
 
-get_ipython().run_line_magic('matplotlib', 'inline')
+pyro.set_rng_seed(1)
 plt.style.use('default')
 
+get_ipython().run_line_magic('matplotlib', 'inline')
+get_ipython().run_line_magic('load_ext', 'autoreload')
 
-# ### 1. Model Specification: Dogs Model definition
+
+# #### Data
+# <br>
+# <br>
+# 
+# The plot that follows highlights Dogs data from `pystan model`, averaged over dog population for each trial.
+
+# In[2]:
+
+
+dogs_data = base.load_data()
+base.plot_original_y(np.mean(dogs_data["Y"], axis=0))
+
+
+# #### Preprocessing
+# <br>
+# <br>
+# 
+# Following transforms target label `Y` to obtain input data `x_avoidance`, `x_shocked` & `y` where:
+# * `x_avoidance` :  number of shock avoidances before current trial.
+# * `x_shocked` :  number of shocks before current trial.
+# * `y`: Status 'shocked or avoided' at current trial.
+# 
+# Here `pystan` format data (python dictionary) is passed to the function above, in order to preprocess it to tensor format required for pyro sampling.
+
+# In[3]:
+
+
+x_avoidance, x_shocked, y= base.transform_data(**dogs_data)
+print("x_avoidance: %s, x_shocked: %s, y: %s"%(x_avoidance.shape, x_shocked.shape, y.shape))
+print("\nSample x_avoidance: %s \n\nSample x_shocked: %s"%(x_avoidance[1], x_shocked[1]))
+
+base.plot_original_y(x_avoidance.numpy(),ylabel='Cumulative Avoidances')
+base.plot_original_y(x_shocked.numpy(),ylabel='Cumulative Shocked Trials')
+
+
+# The original data is not revealing much, looking at the cumulative avoidances and shocks, we see that some dogs never learn (example: Dog 1-4), and some dogs learn and retain the learn behaviour (example: Dog 25-30).
+
+# ### 2. Model Specification
 # ________
-# $$
-# \pi_j   =   A^{xj} B^{j-xj}
-# $$
-# 
-# We intend to find most probable values for parameters $\alpha$ & $\beta$ (dubbed as random variable A & B respectively) in the expression to compute likelihood ($\pi_j$) of dogs getting shocked.
-# 
-# **Generative model for resulting likelihood of shock:**
-# 
-# $\pi_j$  ~   $bern\ (\exp \ (\alpha.XAvoidance + \beta.XShocked)\ )$,  $prior\ \alpha$ ~ $N(0., 316.)$,  $\beta$ ~ $N(0., 316.)$
+# The sampling distrution of the generative model, as indicated earlier, is:
+# <br>
+# <br>
+# $y_{ij}   \sim   Bern(\pi_{ij})$
+# <br>
+# $\log(\pi_{ij})   =   \alpha x_{ij} + \beta({j-x_{ij}})$
+# <br>
+# <br>
+# Here, $y_{ij}=1$ if the a dog fails to avoid a shock at the j-th trial, and is 0 if it avoids. We elicit normal priors for $\alpha,\beta$ with zero mean and large variance (flat) to complete the specification. Also notice that, the above model is in a more familiar form (Generalized Linear Model or Log-Linear Model). For convenience, we can define $X_{a}\equiv x_{ij}, X_{s}\equiv j-x_{ij} $
+# <br>
+# <br>
+# The complete model is:
+# <br>
+# <br>
+# $y_{ij} \sim Bern(\pi_{ij})$ 
+# $\log(pi_{ij})  =   \alpha X_{a} + \beta X_{s}$  
+# $\alpha \sim N(0., 316.)$
+# $\beta \sim N(0., 316.)$
 # 
 # The above expression is used as a generalised linear model with log-link function in WinBugs implementation
+# <br>
+# <br>
+# #### BUGS model
+# <br>
+# <br>
 # 
-#   **BUGS model**
-#   
 # $\log\pi_j = \alpha\ x_j + \beta\ ( $j$-x_j )$
-# 
 #    **Here**
 #    * $\log\pi_j$ is log probability of a dog getting shocked at trial $j$
 #    * $x_j$ is number of successful avoidances of shock prior to trial $j$.
 #    * $j-x_j$ is number of shocks experienced prior to trial $j$.
-#    *  $\alpha$ is the coefficient corresponding to number of success, $\beta$ is the coefficient corresponding to number of failures.
-# 
+#    *  $\alpha$ is the coefficient corresponding to number of successes, $\beta$ is the coefficient corresponding to number of failures.
 #   
 #   ____________________
 # The same model when implemented in PyStan
 #   
-#   **Equivalent Stan model** 
-#   
-#       {
-#   
-#       alpha ~ normal(0.0, 316.2);
-#   
-#       beta  ~ normal(0.0, 316.2);
-#   
-#       for(dog in 1:Ndogs)
-#   
+# #### Equivalent Stan model
+# 
+# ```
+# {
+#     alpha ~ normal(0.0, 316.2);
+#     beta  ~ normal(0.0, 316.2);
+#     for(dog in 1:Ndogs)
 #         for (trial in 2:Ntrials)  
-# 
-#           y[dog, trial] ~ bernoulli(exp(alpha * xa[dog, trial] + beta * 
-#           xs[dog, trial]));
+#             y[dog, trial] ~ bernoulli(exp(alpha * xa[dog, trial] + beta * xs[dog, trial]));
 #       
-#       }  
-# 
+# }  
+# ```
 
-# **Model implementation**
+# #### Model implementation
 # 
-# The model is defined using Pyro as per the expression of generative model for this dataset as follows
+# The above model is defined in `base.DogsModel`
 
-# In[2]:
+# In[4]:
 
 
 DogsModel= base.DogsModel
 DogsModel
 
 
-# **Dogs data**
-# 
-# Following holds the Dogs data in the pystan modelling format
-
-# In[3]:
-
-
-dogs_data = base.load_data()
-dogs_data
-
-
-# **Following processes target label `y` to obtain input data `x_avoidance` & `x_shocked` where:**
-# * `x_avoidance` :  number of shock avoidances before current trial.
-# * `x_shocked` :  number of shocks before current trial.
-
-# **Here the py-stan format data (python dictionary) is passed to the function above, in order to preprocess it to tensor format required for pyro sampling**
-
-# In[4]:
-
-
-x_avoidance, x_shocked, y= base.transform_data(**dogs_data)
-print("x_avoidance: %s, x_shocked: %s, y: %s"%(x_avoidance.shape, x_shocked.shape, y.shape))
-
-print("\nSample x_avoidance: %s \n\nSample x_shocked: %s"%(x_avoidance[1], x_shocked[1]))
-
-
-# ### 2. Prior predictive checking
-# 
-# These checks help to understand the implications of a prior distributions of underlying parameters (random variables) in the context of a given generative model by simulating from the model rather than observed data.
-# 
+# Let us also draw few samples from the prior, and look at the distribution
 
 # In[5]:
 
@@ -158,7 +183,6 @@ prior_samples = {"alpha":list(map(lambda prior_pair:prior_pair[0], priors_list))
 # In[6]:
 
 
-
 fig = ff.create_distplot(list(prior_samples.values()), list(prior_samples.keys()))
 fig.update_layout(title="Prior distribution of parameters", xaxis_title="parameter values", yaxis_title="density", legend_title="parameters")
 fig.show()
@@ -166,22 +190,31 @@ fig.show()
 print("Prior alpha Q(0.5) :%s | Prior beta Q(0.5) :%s"%(np.quantile(prior_samples["alpha"], 0.5), np.quantile(prior_samples["beta"], 0.5)))
 
 
-# ### 3. Posterior estimation
-# 
-# In the parlance of probability theory, Posterior implies the probability of updated beliefs in regard to a quantity or parameter of interest, in the wake of given evidences and prior information.
-# 
-# $$Posterior = \frac {Likelihood x Prior}{Probability \ of Evidence}$$
+# Even though the mean and median can differ from run to run, looking at the densities, the variance is vary large -- so the sample mean would also have huge variance. The take-away is that, both $\alpha, \beta$ are given very weak priors. We more or less rely on the data (evidence) to drive their estimation.
 # 
 # 
-#  
-# For the parameters of interest $\alpha,\beta$ & evidence y; Posterior can be denoted as $P\ (\alpha,\beta\ /\ y)$.
-# 
-# 
-# $$P\ (\alpha,\beta\ /\ y) = \frac {P\ (y /\ \alpha,\beta) P(\alpha,\beta)}{P(y)}$$
-# 
-# Posterior, $P\ (\alpha,\beta\ /\ y)$ in regard to this experiment is the likelihood of parameter values (i.e., Coefficient of instances avoided dubbed retention ability & Coefficient of instances shocked dubbed learning ability) given the observed instances `y` of getting shocked. Where $P(\alpha,\beta)$ is prior information/likelihood of parameter values.
+# TBD: Prior Sensitivity Analysis
 
-# The following intakes a pyro model object with defined priors, input data and some configuration in regard to chain counts & chain length prior to launching a `MCMC NUTs sampler` and outputs MCMC chained samples in a python dictionary format.
+# ### 3. Posterior Estimation
+# 
+# In the Bayesian setting, inference is drawn from the posterior.  Here, posterior implies the updated beliefs about the random variables, in the wake of given evidences (data). Formally,
+# <br>
+# <br>
+# $Posterior = \frac {Likelihood x Prior}{Probability \ of Evidence}$
+# <br>
+# <br>
+# In our case, $\alpha,\beta$ are the parameters (actually random variables) & $y$ is the evidence; Posterior $P(\alpha,\beta | y)$ is given, according to the Bayes rule, as:
+# <br>
+# <br>
+# $P\ (\alpha,\beta | y) = \frac {P(y | \alpha,\beta) \pi(\alpha,\beta)}{P(y)}$
+# <br>
+# <br>
+# 
+# Now our interest is in estimating the posterior summaries of the parameters $\alpha, \beta$. For example, we can look at the posterior of mean of $\alpha$, denoted as $E(\alpha)$. However, in order to the get the posterior quanitities, either we need to compute the integrals or approximate the integrals via Markov Chain Monte Carlo. 
+# 
+# The latter can be easily accomplished in Pyro by using the NUTS sampler -- NUTS is a specific sampler designed to draw samples efficiently from the posterior using Hamiltonian Monte Carlo dynamics.
+# 
+# The following code snippet takes a `pyro` model object with posterior specfication, input data, and some configuration parameters such as a number of chians and numper of samples per chain. It then laucnhes a `NUTS` sampler and produces MCMC samples in a python dictionary format.
 
 # In[7]:
 
@@ -191,37 +224,47 @@ hmc_sample_chains= base.get_hmc_n_chains(DogsModel, x_avoidance, x_shocked, y, n
 
 # `hmc_sample_chains` holds sampled MCMC values as `{"Chain_0": {alpha	[-0.20020795, -0.1829252, -0.18054989 . .,], "beta": {}. .,}, "Chain_1": {alpha	[-0.20020795, -0.1829252, -0.18054989 . .,], "beta": {}. .,}. .}`
 
-# ### 4. Diagnosing model fit
+# ### 4. Diagnosing the computational approximation
 # 
-# Model fit diagnosis consists of briefly obtaining core statistical values from sampled outputs and assess the convergence of various chains from the output, before moving onto inferencing or evaluating predictive power of model.
-
-# Following plots **Parameter vs. Chain matrix** and optionally saves the dataframe.
+# Just like any numerical technique, no matter how good the theory is or how robust the implementation is, it is always a good idea to check if indeed the samples drawn are reasonable. In the ideal situation, we expect the samples drawm by the sampler to be independant, and identically distributed (i.i.d) as the posterior distribution. In practice, this is far from true as MCMC itself is an approxmate technique and a lot can go wrong. In particular, chains may not have converged or samples are very correlated.
+# 
+# We can use both visual and more formal statistical techniques to inspect the quality of the fit (not the model fit to the data, but how well the appximation is, having accepted the model class for the data at hand) by  treating chains as time-series data, and that we can run several chains in parallel. We precisely do that next. 
+# <br>
+# <br>
+# Following snippet allows plotting **Parameter vs. Chain matrix** and optionally saving the dataframe.
 
 # In[8]:
 
 
 beta_chain_matrix_df = pd.DataFrame(hmc_sample_chains)
-beta_chain_matrix_df.to_csv("dogs_log_regression_hmc_sample_chains.csv", index=False)
+beta_chain_matrix_df.to_csv("data/dogs_log_regression_hmc_sample_chains.csv", index=False)
 beta_chain_matrix_df
 
-
-# **Key statistic results as dataframe**
-# 
-# **Following outputs the summary of required statistics such as `"mean", "std", "Q(0.25)", "Q(0.50)", "Q(0.75)"`, given a list of statistic names**
 
 # In[9]:
 
 
-key_metrics= ["mean", "std", "25%", "50%", "75%"]
 
-summary_stats_df_= base.summary_stats_df(beta_chain_matrix_df, key_metrics)
-summary_stats_df_
+base.plot_chains(beta_chain_matrix_df)
 
 
-# **Obtain 5 point Summary statistics (mean, Q1-Q4, Std, ) as tabular data per chain and save the dataframe.**
+# Based on simple multiple line plots, we can see that, in this run, `chain_3` is behaving differently than the remaining chains. It may be due to really a different initialization. Otherwise, all chains seem to mix well. Therefore, we drop `chain_3` from analysis. However, we need to be cautious about dropping, and we should check what is its effect on the actual predictions -- since sometimes, even though parameters can look very different numerically, they may have very little effect on the likelihood. Neverthless, it implies that either something is not right about the chain or the model is operating at the edge.
 # 
+# 
+# #### Descriptive summaries
+# 
+# Following outputs the summary of required statistics such as `"mean", "std", "Q(0.25)", "Q(0.50)", "Q(0.75)"`, select names of statistic metric from given list to view values
 
 # In[10]:
+
+
+
+base.summary(beta_chain_matrix_df)
+
+
+# We can also report the 5-point Summary Statistics (mean, Q1-Q4, Std, ) as tabular data per chain and save the dataframe
+
+# In[11]:
 
 
 fit_df = pd.DataFrame()
@@ -234,7 +277,7 @@ for chain, values in hmc_sample_chains.items():
 fit_df
 
 
-# In[11]:
+# In[12]:
 
 
 # Use/Uncomment following once the results from pyro sampling operation are saved offline
@@ -243,27 +286,27 @@ fit_df
 fit_df.head(3)
 
 
-# Following outputs the similar summary of required statistics such as `"mean", "std", "Q(0.25)", "Q(0.50)", "Q(0.75)"`, **But in a slightly different format**, given a list of statistic names**
+# Following outputs the similar summary of required statistics such as `"mean", "std", "Q(0.25)", "Q(0.50)", "Q(0.75)"`, but in a slightly different format, given a list of statistic names
 
-# In[12]:
+# In[14]:
 
 
-summary_stats_df_2= base.summary_stats_df_2(fit_df, key_metrics)
+summary_stats_df_2= base.summary_stats_df_2(fit_df, ["mean", "std", "25%", "50%", "75%"])
 summary_stats_df_2
 
 
-# **Following plots sampled parameters values as Boxplots with `M parameters` side by side on x axis for each of the `N chains`**
+# Following plots sampled parameters values as Boxplots with `M parameters` side by side on x axis for each of the `N chains`
 
-# In[13]:
+# In[15]:
 
 
 parameters= ["alpha", "beta"]# All parameters for given model
 chains= fit_df["chain"].unique()# Number of chains sampled for given model
 
 
-# **Pass the list of `M parameters` and list of `N chains`, with `plot_interactive` as `True or False` to choose between Plotly or Seaborn**
+# Pass the list of `M parameters` and list of `N chains`, with `plot_interactive` as `True or False` to choose between Plotly or Seaborn
 
-# In[14]:
+# In[16]:
 
 
 # Use plot_interactive=False for Normal seaborn plots offline
@@ -271,58 +314,149 @@ chains= fit_df["chain"].unique()# Number of chains sampled for given model
 base.plot_parameters_for_n_chains(fit_df, chains=['chain_0', 'chain_1', 'chain_2', 'chain_3'], parameters=parameters, plot_interactive=True)
 
 
-# **Following plots the `joint distribution` of `pair of each parameter` sampled values for all chains**
+# Following plots the `joint distribution` of `pair of each parameter` sampled values for all chains
 
-# In[15]:
+# In[17]:
 
 
 
 base.plot_joint_distribution(fit_df, parameters)
 
 
-# **Following plots the `Pairplot distribution` of each parameter with every other parameter's sampled values**
+# Following plots the `Pairplot distribution` of each parameter with every other parameter's sampled values
 
-# In[16]:
+# In[18]:
 
 
 sns.pairplot(data=fit_df, hue= "chain");
 
 
-# **Following intakes the list of parameters say `["alpha", "beta"]` and plots hexbins for each interaction pair for all possible combinations of parameters `alpha & beta`.**
-
-# In[17]:
-
-
-#launch docstring for plot_interaction_hexbins
-
-
-# **Here parameters `["alpha", "beta"]` are passed to plot all possible interaction pair Hexbin plots in between**
-
-# In[18]:
-
-
-
-base.plot_interaction_hexbins(fit_df, parameters=parameters)
-
-
-# ### 5. Model evaluation: Posterior predictive checks
+# Based on all above summaries both visual and descriptive, `chain_2` seemed problematics, and it is very clear that $\alpha, \beta <0$ with almost certainly.
 # 
-# Posterior predictive checking helps examine the fit of a model to real data, as the parameter drawn for simulating conditions & regions of interests come from the posterior distribution.
+# TBD: Converence Statsitics like Gelman-Rubin has to be implemented.
 
-# **Pick samples from one particular chain of HMC samples say `chain_3`**
+# ### 5. Sensitivity Analysis
+# 
+# Posterior Predictive Checking (PPE) helps examine the fit of a model to real data, as the parameter drawn for simulating conditions & regions of interests come from the posterior distribution. While PPE incorporates model uncertainly (by averaring over all possible models), we take a simpler route to begin with, which is to, sample the $\alpha, \beta$ pair that is very plausible in the posterior (eg. the poster means), and simulate data from under this particular generative model.
+# 
+# TBD: Implement PPC
+
+# ### 6. Model Comparison
+# 
+# More often than not, there may be many plausible models that can explain the data. Sometime, the modeling choice is based on _domain knowledge_. Sometime it is out of comptational conveninece. Latter is the case with the choice of priors. One way to consider different models is by eliciting different prior distributions. 
+# 
+# As long as the sampling distribtion is same, one can use Deviance Information Criterion (DIC) to guide model comparison.
+
+# #### Deviance Information Criterion
+# 
+# DIC is computed as follows
+# <Br>
+# 
+# $D(\alpha,\beta) = -2\ \sum_{i=1}^{n} \log P\ (y_{i}\ /\ \alpha,\beta)$
+# 
+# $\log P\ (y_{i}\ /\ \alpha,\beta)$ is the log likehood of shocks/avoidances observed given parameter $\alpha,\beta$, this expression expands as follows:
+# 
+# $$D(\alpha,\beta) = -2\ \sum_{i=1}^{30}[ y_{i}\ (\alpha Xa_{i}\ +\beta\ Xs_{i}) + \ (1-y_{i})\log\ (1\ -\ e^{(\alpha Xa_{i}\ +\beta\ Xs_{i})})]$$
+# 
+# <Br>
+# Using $D(\alpha,\beta)$ to Compute DIC
+# <Br>
+# 
+# $\overline D(\alpha,\beta) = \frac{1}{T} \sum_{t=1}^{T} D(\alpha,\beta)$
+# 
+# $\overline \alpha = \frac{1}{T} \sum_{t=1}^{T}\alpha_{t}\\$
+# $\overline \beta = \frac{1}{T} \sum_{t=1}^{T}\beta_{t}$
+# 
+# $D(\overline\alpha,\overline\beta) = -2\ \sum_{i=1}^{30}[ y_{i}\ (\overline\alpha Xa_{i}\ +\overline\beta\ Xs_{i}) + \ (1-y_{i})\log\ (1\ -\ e^{(\overline\alpha Xa_{i}\ +\overline\beta\ Xs_{i})})]$
+# 
+# <Br>
+# Therefore finally
+# <Br>
+# 
+# $DIC\ =\ 2\ \overline D(\alpha,\beta)\ -\ D(\overline\alpha,\overline\beta)$
+# 
+# <Br>
+# <Br>
+
+# <Br>
+# Following method computes deviance value given parameters `alpha & beta`
+# <Br>
 
 # In[19]:
 
 
-import torch
+#launch docstring for calculate_deviance_given_param
+
+#launch docstring for calculate_mean_deviance
+
+
+# <Br>
+# 
+# Following method computes `deviance information criterion` for a given bayesian model & chains of sampled parameters `alpha & beta`
+# 
+# <Br>
+
+# In[20]:
+
+
+#launch docstring for DIC
+
+#launch docstring for compare_DICs_given_model
+
+
+# #### Define alternate model with different prior
+# 
+# The following model is defined in the same manner using Pyro as per the following expression of generative model for this dataset, just with modification of prior distribution to `Uniform` rather than `Normal` as follows:
+# 
+# Instead of considering Normal priors of $\alpha$ and $\beta$, we consider uniform priors, i.e.,
+# $prior\ \alpha$ ~ $U(0., 316.)$,  $\beta$ ~ $U(0., 316.)$
+
+# In[21]:
+
+
+# # Dogs model with uniform prior
+
+#launch docstring for DogsModelUniformPrior
+
+DogsModelUniformPrior= base.DogsModelUniformPrior
+DogsModelUniformPrior
+
+
+# In[22]:
+
+
+
+hmc_sample_chains_uniform_prior= base.get_hmc_n_chains(DogsModelUniformPrior, x_avoidance, x_shocked, y, num_chains=4, base_count = 900)
+
+
+# compute & compare `deviance information criterion` for a multiple bayesian models
+
+# In[23]:
+
+
+base.compare_DICs_given_model(x_avoidance, x_shocked, y, Dogs_normal_prior= hmc_sample_chains, Dogs_uniform_prior= hmc_sample_chains_uniform_prior)
+
+
+# The DIC values are very close, so we dontr anticipate subtantially different fits. This is largely because, both priors are flat. However, if were to follow the rule book, we had to pick a model with the smallst DIC. In that case, we have to pick Uniform Priors over Normal Priors.
+
+# ### 7. Inference & Analysis
+# 
+# Alright, we have a model, and we are reasonable sure about the fit (both numerical and conceptual), but so what? The purpose of model building is to use these models as probing devices. That is, using the models can we answer some questions about the reality that these models have abstracted. 
+# 
+# 
+# We choose model with Normal Prior, and pick samples from one particular chain of HMC samples say `chain_3`
+
+# In[24]:
+
+
 for chain, samples in hmc_sample_chains.items():
     samples= dict(map(lambda param: (param, torch.tensor(samples.get(param))), samples.keys()))# np array to tensors
     print(chain, "Sample count: ", len(samples["alpha"]))
 
 
-# **Plot density for parameters from `chain_3` to visualise the spread of sample values from that chain**
+# Plot density for parameters from `chain_3` to visualise the spread of sample values from that chain
 
-# In[20]:
+# In[25]:
 
 
 title= "parameter distribution for : %s"%(chain)
@@ -333,9 +467,9 @@ fig.show()
 print("Alpha Q(0.5) :%s | Beta Q(0.5) :%s"%(torch.quantile(samples["alpha"], 0.5), torch.quantile(samples["beta"], 0.5)))
 
 
-# **Plot density & contours for both parameters from `chain_3` to visualise the joint distribution & region of interest**
+# Plot density & contours for both parameters from `chain_3` to visualise the joint distribution & region of interest
 
-# In[21]:
+# In[26]:
 
 
 #Choosing samples from chain 3
@@ -352,263 +486,39 @@ fig.show()
 
 # **Note:** The distribution of alpha values are significantly offset to the left from beta values, by almost 13 times; Thus for any given input observation of avoidances or shocked, the likelihood of getting shocked is more influenced by small measure of avoidance than by getting shocked.
 
-# **Observations:**
+# #### Observations:
 # 
-# **On observing the spread of alpha & beta values, the parameter beta being less negative & closer to zero can be interpreted as `learning ability`, i.e., the ability of dog to learn from shock experiences. The increase in number of shocks barely raises the probability of non-avoidance (value of 𝜋𝑗) with little amount. Unless the trials & shocks increase considerably large in progression, it doesn't mellow down well and mostly stays around 0.9.**
+# On observing the joint distribution of $\alpha, \beta$, we note that $\beta > \alpha$  and $\beta$ is closer to zero. 
+# Here, $\beta$ can be interpreted as _learning ability_, i.e., the ability of a dog to learn from _shock_ experiences. The increase in number of shocks barely raises the probability of non-avoidance (value of 𝜋𝑗) with little amount. Unless the trials & shocks increase considerably large in progression, it doesn't mellow down well and mostly stays around 0.9.
 # 
-# **Whereas its not the case with alpha, alpha is more negative & farthest from zero. It imparts a significant decline in non-avoidance (𝜋𝑗) even for few instances where dog avoids the shock; therefore alpha can be interpreted as `retention ability` i.e., the ability to retain the learning from previous shock experiences.**
+# However, it is not the case with alpha, alpha is more negative & farthest from zero. It imparts a significant decline in non-avoidance (𝜋𝑗) even for few instances where dog avoids the shock; therefore alpha can be interpreted as _retention ability_ i.e., the ability to retain the learning from previous shock experiences.
 
-# In[22]:
+# In[27]:
 
 
 print(chain_samples_df["alpha"].describe(),"\n\n", chain_samples_df["beta"].describe())
 
 
-# **From the contour plot above following region in posterior distribution seems highly plausible for parameters:**
+# From the contour plot above following region in posterior distribution seems highly plausible for parameters:
 # 1. For alpha, `-0.2 < alpha < -0.19`
 # 2. For beta `-0.0075 < beta < -0.0055`
+
+# Let us look at $\frac{\alpha}{\beta}$ as a proxy to see which of the two (_learning ability_ and _retention_ability) are domimant. 
 # 
-# Following selects all the pairs of `alpha, beta` values between the range mentioned above.
-
-# In[23]:
-
-
-select_sample_df= chain_samples_df[(chain_samples_df["alpha"]<-0.19)&(chain_samples_df["alpha"]>-0.2)&(chain_samples_df["beta"]<-0.0075)&(chain_samples_df["beta"]<-0.0055)]
-
-# print(select_sample_df.set_index(["alpha", "beta"]).index)
-print("Count of alpha-beta pairs of interest, from mid region with high desnity in contour plot above (-0.2 < alpha < -0.19, -0.0075 < beta < -0.0055): ", select_sample_df.shape[0])
-
-select_sample_df.head(3)
-
-
-# **Picking a case of 3 trials with Y [0,1,1], i.e. Dog is shocked in 1st, Dogs avoids in 2nd & thereafter, effectively having an experience of 1 shock & 1 avoidance. `Considering all values of alpha & beta in range -0.2 < alpha < -0.19, -0.0075 < beta < -0.0055`**
-
-# In[24]:
-
-
-Y_li= []
-Y_val_to_param_dict= defaultdict(list)
-
-# Value -0.2 < alpha < -0.19, -0.0075 < beta < -0.0055
-for rec in select_sample_df.iterrows():# for -0.2 < alpha < -0.19, -0.0075 < beta < -0.0055
-    a,b = float(rec[1]["alpha"]), float(rec[1]["beta"])
-    res= round(np.exp(a+b), 4)
-    Y_li.append(res)
-    Y_val_to_param_dict[res].append((round(a,5),round(b,5)))# Sample-- {0.8047: [(-0.18269378, -0.034562342), (-0.18383412, -0.033494473)], 0.8027: [(-0.18709463, -0.03263992), (-0.18464606, -0.035114493)]}
-
-
-# In above `Y_val_to_param` is a dictionary that holds value $\exp^{\alpha +\beta}$ as key and tuple of corresponding $(\alpha, \beta)$ as value.
+# We are using $\frac{\alpha}{\beta}$ as a probing device to answer that question, and similar quantities can be defined. With MCMC samples available, we can get posterior probabilties of any function of the model parameters (here $\alpha, \beta$. Say, we can be interested in the $E(\frac{\alpha}{\beta})$ or $P(\frac{\alpha}{\beta}<1)$.
 # 
-# The following plots the histogram of $\exp^{\alpha +\beta}$ values obtained as an interaction of selected $\alpha$ and $\beta$ values from region of interest.
-
-# In[25]:
-
-
-Y_for_select_sample_df = pd.DataFrame({"Y_for -0.2 < alpha < -0.19 & -0.0075 < beta < -0.0055": Y_li})
-fig = px.histogram(Y_for_select_sample_df, x= "Y_for -0.2 < alpha < -0.19 & -0.0075 < beta < -0.0055")
-title= "observed values distribution for params Y_for -0.2 < alpha < -0.19 & -0.0075 < beta < -0.0055"
-
-fig.update_layout(title=title, xaxis_title="observed values", yaxis_title="count", legend_title="dogs")
-fig.show()
-print("Mean: %s | Median: %s"%(np.mean(Y_li), np.quantile(Y_li, 0.5)))
-print("Sorted observed values: \n", sorted(Y_li))
-
-
-# **For given experiment of 3 trials, from all the `Ys` with corresponding alpha-beta pairs of interest, pick 3  lower most values of `Y` for instance; Thus selecting its corresponding alpha-beta pairs**
-# 
-# **Note:** Can add multiple observed values from histogram for comparison.
-
-# Corresponding to `lowest_obs` values of `Y`, obtain `select_pairs` as list of correspoding alpha, beta pairs from  `Y_val_to_param_dict`.
-
-# In[26]:
-
-
-lowest_obs = sorted(Y_li)[:3]#[0.8085, 0.8094, 0.8095]# Pick values from above histogram range or sorted list
-
-selected_pairs= list(itertools.chain.from_iterable(map(lambda obs: Y_val_to_param_dict.get(obs), lowest_obs)))
-selected_pairs
-
-
-# **Following stores a dictionary of `observed y` values for pair of alpha-beta parameters**
-
-# In[27]:
-
-
-obs_y_dict= base.get_obs_y_dict(selected_pairs, x_avoidance, x_shocked)
-
-print("Alpha-beta pair values as Keys to access corresponding array of inferred observations: \n", list(obs_y_dict.keys()))
-
-
-# **Following plots scatterplots of `observed y` values for all 30 dogs for each alpha-beta pair of interest**
+# The latter quantity can be estimate by the Monte Carlo average as follows:
+# $P(\frac{\alpha}{\beta}>1) = \frac{1}{n}\sum_{t=1}^{n} I(\alpha < \beta)$, i.e, the fraction of times $\alpha < \beta$.
 
 # In[28]:
 
 
-#launch docstring for plot_observed_y_given_parameters
+x1 = chain_samples_df["alpha"].to_numpy()
+x2 = chain_samples_df["beta"].to_numpy()
+p = np.mean(x1<x2)
+print(p)
 
 
-# **Also Optionally pass the `True observed y` values to `original_obs` argument for all 30 dogs to plot alongside the `observed y` from alpha-beta pairs of interest.**
-# 
-# **_Note_**: `True observed y` are marked with legends in format `*Dog_X`
+# So, the posterior evident for _retention ability_ outweigting _learning abilty_ is overwhelming.  
 
-# In[29]:
-
-
-base.plot_observed_y_given_parameters(lowest_obs, selected_pairs, obs_y_dict, chain, original_obs= y)
-
-
-# **Following plots a single scatterplots for comparison of `observed y` values for all alpha-beta pairs of interest from dense region in contourplot above, that is `-0.2 < alpha < -0.19`, `-0.0075 < beta < -0.0055`**
-# 
-
-# In[30]:
-
-
-
-#launch docstring for compare_dogs_given_parameters
-
-
-# **Also Optionally pass the `True observed y` values to `original_obs` argument for all 30 dogs to plot alongside the `observed y` from alpha-beta pairs of interest.**
-# 
-# **_Note_**: `True observed y` are marked with legends in format `*Dog_X`
-
-# In[31]:
-
-
-base.compare_dogs_given_parameters(selected_pairs, obs_y_dict, original_obs= y)
-
-
-# **Observations:** The 3 individual scatter plots above correspond to 3 most optimum alpha-beta pairs from 3rd quadrant of contour plot drawn earlier; Also the scatterplot following them faciliates comparing obeserved y values for all 3 pairs at once:
-# 
-# Data for almost all dogs in the experiment favours m1 parameters (-0.19852, -0.0156), over m3 & m2; With exceptions of Dog 6, 7 showing affinity to m3 parameters (-0.19804, -0.01568), over m2 & m1 at all levels of 30 trials.
-
-# **Plotting observed values y corresponding to pairs of alpha-beta with with `mean, minmum, maximum value of` $\frac{alpha}{beta}$**
-
-# **Following computes $\frac{alpha}{beta}$ for each pair of alpha, beta and outputs pairs with `mean, maximum & minimum values`; that can therefore be marked on a single scatterplots for comparison of observed y values for all alpha-beta pairs of interest**
-
-# In[32]:
-
-
-
-#launch docstring for get_alpha_by_beta_records
-
-
-# In[33]:
-
-
-alpha_by_beta_dict = base.get_alpha_by_beta_records(chain_samples_df, metrics=["max", "min", "mean"])# outputs a dict of type {(-0.2010, -0.0018): 107.08}
-print("Alpha-beta pair with value as alpha/beta: ", alpha_by_beta_dict)
-
-
-alpha_by_beta_selected_pairs= list(alpha_by_beta_dict.keys())
-alpha_by_beta_obs_y_dict = base.get_obs_y_dict(alpha_by_beta_selected_pairs, x_avoidance, x_shocked)# Outputs observed_values for given (alpha, beta)
-
-
-# **Following is the scatter plot for `observed y` values corresponding to pairs of `alpha, beta` yielding `minimum, maximum & mean` value for $\frac{alpha}{beta}$.**
-# 
-# **_Note_**: The y i.e., original observations are simultaneously plotted side by side.
-
-# In[34]:
-
-
-
-base.compare_dogs_given_parameters(alpha_by_beta_selected_pairs, alpha_by_beta_obs_y_dict, 
-                              original_obs= y, alpha_by_beta_dict= alpha_by_beta_dict)
-
-
-# **Observations:** The scatter plots above corresponds to 3 pairs of alpha-beta values from contour plot drawn earlier, which correspond to maxmimum, minimum & mean value of 𝛼/𝛽. Plot faciliates comparing `obeserved y` values for all pairs with `True observed y` at once:
-# 
-#     1. Data for for first 7 dogs in the experiment favours m1 parameters (-0.184, -0.0015) with highest 𝛼/𝛽 around 116, followed by m3 & m2 at all levels of 30 trials. Avoidance learning in these 7 dogs is captured suitablely by model 2 but most of the instances for which they are shocked, are modelled well with m1 parameters.
-#     
-#     2. Data for for rest 23 dogs in the experiment showed affinity for m2 parameters (-0.197, -0.016) with lowest 𝛼/𝛽 around 11, followed by m3 & m1 at all levels of 30 trials; Likewise Avoidance learning in these 23 dogs is captured suitablely by model 2 but most of the instances for which they are shocked, are modelled well with m1 parameters only.
-#     
-#     3. Data for Dogs 18-20 fits model 2 increasingly well after 10th trial; Whereas for Dogs 21-30 model 2 parameters fit the original data exceptionally well after 6th trial only.
-
-# ### 6. Model Comparison
-# **Compare Dogs model with Normal prior & Uniform prior using Deviance Information Criterion (DIC)**
-
-# **DIC is computed as follows**
-# 
-# $D(\alpha,\beta) = -2\ \sum_{i=1}^{n} \log P\ (y_{i}\ /\ \alpha,\beta)$
-# 
-# $\log P\ (y_{i}\ /\ \alpha,\beta)$ is the log likehood of shocks/avoidances observed given parameter $\alpha,\beta$, this expression expands as follows:
-# 
-# $$D(\alpha,\beta) = -2\ \sum_{i=1}^{30}[ y_{i}\ (\alpha Xa_{i}\ +\beta\ Xs_{i}) + \ (1-y_{i})\log\ (1\ -\ e^{(\alpha Xa_{i}\ +\beta\ Xs_{i})})]$$
-# 
-# 
-# #### Using $D(\alpha,\beta)$ to Compute DIC
-# 
-# $\overline D(\alpha,\beta) = \frac{1}{T} \sum_{t=1}^{T} D(\alpha,\beta)$
-# 
-# $\overline \alpha = \frac{1}{T} \sum_{t=1}^{T}\alpha_{t}\\$
-# $\overline \beta = \frac{1}{T} \sum_{t=1}^{T}\beta_{t}$
-# 
-# $D(\overline\alpha,\overline\beta) = -2\ \sum_{i=1}^{30}[ y_{i}\ (\overline\alpha Xa_{i}\ +\overline\beta\ Xs_{i}) + \ (1-y_{i})\log\ (1\ -\ e^{(\overline\alpha Xa_{i}\ +\overline\beta\ Xs_{i})})]$
-# 
-# 
-# **Therefore finally**
-# $$
-# DIC\ =\ 2\ \overline D(\alpha,\beta)\ -\ D(\overline\alpha,\overline\beta)
-# $$
-# 
-# 
-
-# **Following method computes deviance value given parameters `alpha & beta`**
-
-# In[35]:
-
-
-
-#launch docstring for calculate_deviance_given_param
-
-#launch docstring for calculate_mean_deviance
-
-
-# **Following method computes `deviance information criterion` for a given bayesian model & chains of sampled parameters `alpha & beta`**
-
-# In[36]:
-
-
-#launch docstring for DIC
-
-#launch docstring for compare_DICs_given_model
-
-
-# **Define alternate model with different prior such as uniform distribution**
-# 
-# The following model is defined in the same manner using Pyro as per the following expression of generative model for this dataset, just with modification of prior distribution to `Uniform` rather than `Normal` as follows:
-# 
-# $\pi_j$  ~   $bern\ (\exp \ (\alpha.XAvoidance + \beta.XShocked)\ )$,  $prior\ \alpha$ ~ $U(0., 316.)$,  $\beta$ ~ $U(0., 316.)$
-
-# In[37]:
-
-
-# # Dogs model with uniform prior
-
-#launch docstring for DogsModelUniformPrior
-
-
-# In[38]:
-
-
-DogsModelUniformPrior= base.DogsModelUniformPrior
-DogsModelUniformPrior
-
-
-# In[39]:
-
-
-
-hmc_sample_chains_uniform_prior= base.get_hmc_n_chains(DogsModelUniformPrior, x_avoidance, x_shocked, y, num_chains=4, base_count = 900)
-
-
-# **compute & compare `deviance information criterion` for a multiple bayesian models**
-
-# In[40]:
-
-
-base.compare_DICs_given_model(x_avoidance, x_shocked, y, Dogs_normal_prior= hmc_sample_chains, Dogs_uniform_prior= hmc_sample_chains_uniform_prior)
-
-
-# **Since the Model `Dogs_normal_prior` has DIC lower than Model `Dogs_uniform_prior`, therefore Model `Dogs_uniform_prior` is more likely to fit the observed data successfully**
-
-# _______________
+# ____________________
