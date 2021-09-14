@@ -381,7 +381,7 @@ class base(object):
 
     
     @staticmethod
-    def summary(beta_chain_matrix_df):
+    def summary(beta_chain_matrix_df, layout = 1):
         reset_slider= lambda x: reset_slider_main()
 
         def reset_slider_main():
@@ -402,7 +402,9 @@ class base(object):
                 def select_multiple_eventhandler(change):
                     select_multiple_output.clear_output()
                     with select_multiple_output:
-                        display(base.summary_stats_df(beta_chain_matrix_df, list(change.owner.value)))
+                        if layout!=2:
+                            display(base.summary_stats_df(beta_chain_matrix_df, list(change.owner.value)))
+                        else: display(base.summary_stats_df_2(beta_chain_matrix_df, list(change.owner.value)))
 
                 select_multiple.observe(select_multiple_eventhandler, names='value')
                 display(select_multiple)
@@ -416,9 +418,14 @@ class base(object):
                     dropdown_output.clear_output()
                     with dropdown_output:
                         if (change.new == "ALL"):
-                            display(base.summary_stats_df(beta_chain_matrix_df, ["mean", "std", "25%", "50%", "75%"]))
+                            if layout!=2:
+                                display(base.summary_stats_df(beta_chain_matrix_df, ["mean", "std", "25%", "50%", "75%"]))
+                            else: display(base.summary_stats_df_2(beta_chain_matrix_df, ["mean", "std", "25%", "50%", "75%"]))
+
                         else:
-                            display(base.summary_stats_df(beta_chain_matrix_df, [change.new]))#summary_stats_df_[summary_stats_df_ == change.new])
+                            if layout!=2:
+                                display(base.summary_stats_df(beta_chain_matrix_df, [change.new]))#summary_stats_df_[summary_stats_df_ == change.new])
+                            else: display(base.summary_stats_df_2(beta_chain_matrix_df, [change.new]))#summary_stats_df_[summary_stats_df_ == change.new])
 
                 dropdown.observe(dropdown_eventhandler, names='value')
                 display(dropdown)
