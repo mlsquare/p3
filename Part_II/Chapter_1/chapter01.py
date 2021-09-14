@@ -7,6 +7,7 @@ import time
 import numpy as np
 import pandas as pd
 import re
+from io import StringIO
 import itertools
 import seaborn as sns
 import matplotlib.pyplot as plt
@@ -309,6 +310,76 @@ class base(object):
             plt.title(f'{param1} Vs. {param2}')
             plt.show()
 
+    @staticmethod
+    def toggle_status(any_button, flag= 0):
+        time.sleep(0.3)
+        if flag:
+            any_button.icon = "hourglass-half"
+            any_button.button_style='warning'
+        else:
+            any_button.icon = any_button.description.lower()
+            any_button.button_style="info"
+
+    @staticmethod
+    def save_main(save_button, param_chain_matrix_df, filepath):
+        clear_output()
+        param_chain_matrix_df.to_csv(filepath, index=False)
+        display(save_button)
+        base.toggle_status(save_button, 1)
+        base.toggle_status(save_button, 0)
+        print("Saved at '%s'"%filepath)
+
+    @staticmethod
+    def build_save_button():
+        save_button = widgets.Button(
+            description='Save',
+            disabled=False,
+            button_style='info',
+            tooltip='save',
+            icon="save"
+        )
+        return save_button
+
+    @staticmethod
+    def save_parameter_chain_dataframe(param_chain_matrix_df, filepath):
+        save_button= base.build_save_button()
+        save_func = lambda x: base.save_main(save_button, param_chain_matrix_df, filepath)
+        save_button.on_click(save_func)
+        display(save_button)
+
+    @staticmethod
+    def load_main(load_button):
+        clear_output()
+        for filename in load_button.value:
+            string_representation=str(load_button.value[filename]["content"],'utf-8')
+            string_transformed = StringIO(string_representation)
+        
+            param_chain_matrix_df=pd.read_csv(string_transformed)
+    
+        base.toggle_status(load_button, 1)
+        base.toggle_status(load_button, 0)
+        print("Loaded '%s'"%filename)
+        return param_chain_matrix_df
+
+    @staticmethod
+    def build_upload_button():
+        load_button = widgets.FileUpload(accept='.csv', 
+                                    button_style='info',
+                                    icon="upload",
+                                    multiple=False)
+
+        display(load_button)
+        return load_button
+
+    @staticmethod
+    def load_parameter_chain_dataframe(load_button):
+        if load_button.value:
+            param_chain_matrix_df= base.load_main(load_button)
+        else: 
+            param_chain_matrix_df= pd.DataFrame()
+        return param_chain_matrix_df
+
+    
     @staticmethod
     def summary(beta_chain_matrix_df):
         reset_slider= lambda x: reset_slider_main()
