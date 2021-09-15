@@ -24,6 +24,7 @@ from pyro.infer import MCMC, NUTS
 import plotly
 import plotly.express as px
 import plotly.figure_factory as ff
+from statsmodels.graphics.tsaplots import plot_acf
 import ipywidgets as widgets
 from IPython.display import display, clear_output
 
@@ -310,6 +311,61 @@ class base(object):
             plt.title(f'{param1} Vs. {param2}')
             plt.show()
 
+    
+    # ACF plots widgets
+    @staticmethod
+    def plot_autocorrelation(beta_chain_matrix_df, param, chain_list):
+        for chain in chain_list:
+            data= beta_chain_matrix_df.loc[param][chain]
+            fig = plot_acf(data, title="Sample autocorrelation for '%s' from '%s'"%(param, chain))
+            fig.set_figwidth(9)
+            fig.set_figheight(5)
+            plt.show()
+
+
+    # ACF plots widgets
+    @staticmethod
+    def autocorrelation_plots(beta_chain_matrix_df):
+        """
+        Input:
+        -------
+        
+        Output:
+        --------
+        
+        
+        """
+        
+        parameters= list(beta_chain_matrix_df.index)
+        chains = list(beta_chain_matrix_df.columns)
+
+        def radio_but_eventhandler(tick):
+            print("Use 'Shift / Ctrl or Cmd' + Arrow keys to select chains")
+            select_multiple= widgets.SelectMultiple(options=chains,
+                                                    value=[np.random.choice(chains)], description='Select Chains', disabled=False)
+            select_multiple_output = widgets.Output()
+
+            def select_multiple_eventhandler(change):
+                select_multiple_output.clear_output()
+                param = tick.owner.value
+                with select_multiple_output:
+                    # display(plot_autocorrelation(beta_chain_matrix_df, param, list(change.owner.value)))
+                    display(base.plot_autocorrelation(beta_chain_matrix_df, param, list(change.owner.value)))
+
+            clear_output()
+            display(radio_but)
+            select_multiple.observe(select_multiple_eventhandler, names='value')
+            display(select_multiple)
+            display(select_multiple_output)
+
+        radio_but= widgets.RadioButtons(options=parameters, description='Parameters:', disabled=False)
+        radio_but_output = widgets.Output()
+
+        radio_but.observe(radio_but_eventhandler, names='value')
+        display(radio_but)
+
+
+    #Save & load button widgets
     @staticmethod
     def toggle_status(any_button, flag= 0):
         time.sleep(0.3)
