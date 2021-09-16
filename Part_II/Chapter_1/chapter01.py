@@ -189,12 +189,15 @@ class base(object):
         num_chains: Count of MCMC chains to launch, default 4
         base_count:Minimum count of samples in a MCMC chains , default 900
         
-        Ouputs
+        Outputs
         ---------
         hmc_sample_chains: a dictionary with chain names as keys & dictionary of parameter vs sampled values list as values 
+        hmc_chain_diagnostics: a dictionary with chain names as keys & dictionary of chain diagnostic metric values from hmc sampling. 
         
         """
         hmc_sample_chains =defaultdict(dict)
+        hmc_chain_diagnostics =defaultdict(dict)
+        
         possible_samples_list= random.sample(list(np.arange(base_count, base_count+num_chains*100, 50)), num_chains)
         possible_burnin_list= random.sample(list(np.arange(100, 500, 50)), num_chains)
 
@@ -205,10 +208,50 @@ class base(object):
             mcmc = MCMC(nuts_kernel, num_samples=num_samples, warmup_steps=burnin)
             mcmc.run(xa, xs, y)
             hmc_sample_chains['chain_{}'.format(idx)]={k: v.detach().cpu().numpy() for k, v in mcmc.get_samples().items()}
+            hmc_chain_diagnostics['chain_{}'.format(idx)]= mcmc.diagnostics()
 
         print("\nTotal time: ", time.time()-t1)
         hmc_sample_chains= dict(hmc_sample_chains)
-        return hmc_sample_chains
+        hmc_chain_diagnostics= dict(hmc_chain_diagnostics)
+        
+        return hmc_sample_chains, hmc_chain_diagnostics
+
+    @staticmethod
+    def get_chain_diagnostics(hmc_chain_diagnostics):
+        """
+        Input
+        -------
+        hmc_chain_diagnostics: dictionary holding chain diagnostic metric values from hmc sampling 
+                                (ex: {'chain_0': {'alpha': OrderedDict([('n_eff', tensor(320.6277)),('r_hat', tensor(0.9991))]),
+                                'beta': OrderedDict([('n_eff', tensor(422.8024)), ('r_hat', tensor(0.9991))]),'divergences': {'chain 0': []},
+                                'acceptance rate': {'chain 0': 0.986}}}).
+        
+        Outputs
+        ---------
+        pandas dataframe holding hmc chain diagnostic results.
+        
+        """
+        diagnostics_df= pd.DataFrame()
+
+        for chain, diag_di in hmc_chain_diagnostics.items():
+            parameters= list(set(diag_di.keys())- {'acceptance rate', 'divergences'})
+            diag_params= list(diag_di.get(parameters[0]).keys())
+
+            diag_func = lambda param: (param, list(map(lambda d_param: diag_di[param][d_param].item(), diag_params)))
+
+            diagnostics_dict = dict(map(diag_func, parameters))
+            diagnostics_dict.update({"metric": diag_params, "chain":chain, 
+                        "acceptance rate":diag_di.get("acceptance rate", {}).get("chain 0")})
+
+            diagnostics_dict_df = pd.DataFrame(diagnostics_dict)
+            diagnostics_dict_df["divergences"]= str(diag_di.get("divergences", {}).get("chain 0", []))
+        #     diagnostics_dict_df["divergences"]=[diag_di.get("divergences", {}).get("chain 0", []) for i in diagnostics_dict_df.index]
+            diagnostics_df = pd.concat([diagnostics_df, diagnostics_dict_df], axis=0)
+
+        diagnostics_df= diagnostics_df.melt(id_vars=["chain", "metric", "acceptance rate", "divergences"], var_name="parameters", value_name="metric_values")
+        diagnostics_df.set_index(["parameters", "chain", "metric"], inplace=True)
+
+        return diagnostics_df
 
     @staticmethod
     def summary_stats_df(beta_chain_matrix_df, key_metrics):
@@ -235,13 +278,14 @@ class base(object):
     @staticmethod
     def summary_stats_df_2(fit_df, key_metrics):
         summary_stats_df= pd.DataFrame()
-        for param in ["alpha", "beta"]:
+        parameters= list(set(fit_df.columns) - {"chain"})
+        for param in parameters:
             for name, groupdf in fit_df.groupby("chain"):
                 groupdi = dict(groupdf[param].describe())
 
         #         values = dict(map(lambda key:(key, [groupdi.get(key)]), ['mean', 'std', '25%', '50%', '75%']))
                 values = dict(map(lambda key:(key, [groupdi.get(key)]), key_metrics))
-                
+
                 values.update({"parameter": param, "chain":name})
                 summary_stats_df_= pd.DataFrame(values)
                 summary_stats_df= pd.concat([summary_stats_df, summary_stats_df_], axis=0)
