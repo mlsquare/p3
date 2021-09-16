@@ -6,7 +6,7 @@
 # 
 # ### 1. Introduction
 # 
-# Solomon-Wynne in 1953 conducted an experiment on Dogs. He wanted to understand, whether Dogs can learn from mistakes, so to speak; Specifically, he was interested in _avoidance-learning_. That is, when Dogs are given trauma-inducing shocks, will they learn to avoid shocks in future?
+# Solomon-Wynne in 1953 conducted an experiment on Dogs. He wanted to understand, whether Dogs can learn from mistakes, so to speak. Specifically, They were interested in _avoidance-learning_. That is, when Dogs are given trauma-inducing shocks; Will they learn to avoid shocks in future?
 # 
 # We can state the objectives of the expeirment, according to our understanding, in more general terms as follows:
 # 
@@ -21,16 +21,17 @@
 # ![dog_setup](./data/avoidance_learning.png)
 # <br>
 # <br>
-# More details of the experiment can be found [here](http://www.appstate.edu/~steelekm/classes/psy5300/Documents/Solomon&Wynne%201953.pdf)
+# More details of the experiment can be found [here](http://www.appstate.edu/~steelekm/classes/psy5300/Documents/Solomon&Wynne%201953.pdf).
+# 
 # <br>
 # <br>
 
-# In this chapter, we will analyze the experimental data using 'Bayesian Analysis', and the inference will be carried out in Pyro. The organization of the notebook is inspired from [Bayesian Workflow](http://www.stat.columbia.edu/~gelman/research/unpublished/Bayesian_Workflow_article.pdf) by Prof. Andrew Gelman et al. Another piece of work in that direction is from Betoncourt et al [here](https://arxiv.org/abs/1904.12765). However, the current analysis is a WIP and far from perfect.
+# In this chapter, we will analyze the experimental data using _Bayesian Analysis_, and the inference will be carried out in `Pyro`. The organization of the notebook is inspired from [Bayesian Workflow](http://www.stat.columbia.edu/~gelman/research/unpublished/Bayesian_Workflow_article.pdf) by Prof. Andrew Gelman et al. Another piece of work in that direction is from Betancourt et al [here](https://arxiv.org/abs/1904.12765). However, the current analysis is a WIP and far from perfect.
 # 
 # 
-# An almost always first step in Bayesian Analysis is to elicit a pluasible generative model, that would have likely generated the observed data. In this case, consider the model suggesed/implemented in WinBUGs [Vol1](https://www.mrc-bsu.cam.ac.uk/wp-content/uploads/WinBUGS_Vol1.pdf).
+# An almost always first step in Bayesian Analysis is to elicit a plausible generative model, that would have likely generated the observed data. In this case, consider the model suggesed/implemented in WinBUGs [Vol1](https://www.mrc-bsu.cam.ac.uk/wp-content/uploads/WinBUGS_Vol1.pdf).
 # 
-# We want to model the relationship between __avoidance-in-future__ and past traumatic experiences. The following log-linear model is a starting point:
+# We want to model the relationship between __avoidance-in-future__ and __past-traumatic-experiences__ . The following log-linear model is a starting point:
 # <br>
 # <br>
 # $\pi_j   =   A^{xj} B^{j-xj} $
@@ -40,9 +41,9 @@
 #    * $\pi_j$ is the probability of a dog getting shocked at trial $j$
 #    * $x_j$ is number of successful avoidances of shock prior to trial $j$.
 #    * $j-x_j$ is number of shocks experienced prior to trial $j$.
-#    * A & B both are unknown and treated as random variables
+#    * A & B, both are unknown and treated as random variables.
 # 
-# However, the model is only partially complete. In a Bayesian setting, we need to elicit our prior beliefs about the unknowns. Consequently, we need to give priors to $A$ and $B$, which we do shortly. Before that, we need some boiler plate code, mostly `imports`. Note that, all the code (functions) are glued in the [base](https://github.com/mlsquare/p3/blob/p3_part_2_ch01/Part_II/Chapter_1/chapter01.py) class. If one is interested, they can always browse the code repo to get better understanding.
+# However, the model is only partially complete. In a Bayesian setting, we need to elicit our prior beliefs about the unknowns. Consequently, we need to give priors to $A$ and $B$, which we do shortly. Before that, we need some boiler plate code, mostly `imports`. Note that, all the code (functions) are glued in the [base](https://github.com/mlsquare/p3/blob/p3_part_2_ch01/Part_II/Chapter_1/chapter01.py) class. If one is interested, they can always browse the code [repo](https://github.com/mlsquare/p3) to get better understanding.
 
 # In[1]:
 
@@ -62,6 +63,8 @@ from chapter01 import base
 import numpy as np
 
 pyro.set_rng_seed(1)
+
+
 plt.style.use('default')
 
 get_ipython().run_line_magic('matplotlib', 'inline')
@@ -71,15 +74,20 @@ get_ipython().run_line_magic('load_ext', 'autoreload')
 # #### Data
 # <br>
 # <br>
+# The data contains experiments over 30 dogs, each dog is subjected to 25 trials.
 # 
-# The plot that follows highlights Dogs data from `pystan model`, averaged over dog population for each trial.
+# The plot that follows highlights Dogs data in dictionary format, averaged over dog population for each trial.
+# 
+# write latex for summation of `averaged over dog population for each trial.`
 
 # In[2]:
 
 
 dogs_data = base.load_data()
-base.plot_original_y(np.mean(dogs_data["Y"], axis=0))
+base.plot_original_y(np.mean(dogs_data["Y"], axis=0), ylabel='Probability of avoidance at trial j')
 
+
+# Its apparent from experimental data that more than half the dog population learns to avoid shocks in trials as few as 5, and also that the learning doesn't significantly rise with increased number of trials.
 
 # #### Preprocessing
 # <br>
@@ -90,7 +98,7 @@ base.plot_original_y(np.mean(dogs_data["Y"], axis=0))
 # * `x_shocked` :  number of shocks before current trial.
 # * `y`: Status 'shocked or avoided' at current trial.
 # 
-# Here `pystan` format data (python dictionary) is passed to the function above, in order to preprocess it to tensor format required for pyro sampling.
+# Here `pystan` format [data](https://github.com/stan-dev/example-models/blob/master/bugs_examples/vol1/dogs/dogs.data.R) (python dictionary) is passed to the function above, in order to preprocess it to tensor format required for pyro sampling.
 
 # In[3]:
 
@@ -99,11 +107,11 @@ x_avoidance, x_shocked, y= base.transform_data(**dogs_data)
 print("x_avoidance: %s, x_shocked: %s, y: %s"%(x_avoidance.shape, x_shocked.shape, y.shape))
 print("\nSample x_avoidance: %s \n\nSample x_shocked: %s"%(x_avoidance[1], x_shocked[1]))
 
-base.plot_original_y(x_avoidance.numpy(),ylabel='Cumulative Avoidances')
-base.plot_original_y(x_shocked.numpy(),ylabel='Cumulative Shocked Trials')
+base.plot_original_y(x_avoidance.numpy(), ylabel='Cumulative Avoidances')
+base.plot_original_y(x_shocked.numpy(), ylabel='Cumulative Shocked Trials')
 
 
-# The original data is not revealing much, looking at the cumulative avoidances and shocks, we see that some dogs never learn (example: Dog 1-4), and some dogs learn and retain the learn behaviour (example: Dog 25-30).
+# The original data is not revealing much, looking at the cumulative avoidances and shocks, we see that some dogs never learn (example: Dog 1-4), and some dogs learn and retain the learning behaviour (example: Dog 25-30).
 
 # ### 2. Model Specification
 # ________
@@ -134,13 +142,38 @@ base.plot_original_y(x_shocked.numpy(),ylabel='Cumulative Shocked Trials')
 # <br>
 # 
 # $\log\pi_j = \alpha\ x_j + \beta\ ( $j$-x_j )$
+#    
 #    **Here**
 #    * $\log\pi_j$ is log probability of a dog getting shocked at trial $j$
 #    * $x_j$ is number of successful avoidances of shock prior to trial $j$.
 #    * $j-x_j$ is number of shocks experienced prior to trial $j$.
 #    *  $\alpha$ is the coefficient corresponding to number of successes, $\beta$ is the coefficient corresponding to number of failures.
 #   
-#   ____________________
+# **Following code block is from original BUGS volume:**
+# 
+# 
+# 
+# ```model
+#     {
+#         for (i in 1 : Dogs) {
+#         xa[i, 1] <- 0; xs[i, 1] <- 0 p[i, 1] <- 0
+#         for (j in 2 : Trials) {
+#         xa[i, j] <- sum(Y[i, 1 : j - 1])
+#         xs[i, j] <- j - 1 - xa[i, j]
+#         log(p[i, j]) <- alpha * xa[i, j] + beta * xs[i, j]
+#         y[i, j] <- 1 - Y[i, j]
+#         y[i, j] ~ dbern(p[i, j])
+#        }
+#     }
+#     alpha ~ dnorm(0, 0.00001)I(, -0.00001)
+#     beta ~ dnorm(0, 0.00001)I(, -0.00001)
+#     A <- exp(alpha)
+#     B <- exp(beta)
+#     }
+# ```
+# 
+# 
+# ____________________
 # The same model when implemented in PyStan
 #   
 # #### Equivalent Stan model
@@ -155,6 +188,7 @@ base.plot_original_y(x_shocked.numpy(),ylabel='Cumulative Shocked Trials')
 #       
 # }  
 # ```
+# 
 
 # #### Model implementation
 # 
@@ -214,12 +248,13 @@ print("Prior alpha Q(0.5) :%s | Prior beta Q(0.5) :%s"%(np.quantile(prior_sample
 # 
 # The latter can be easily accomplished in Pyro by using the NUTS sampler -- NUTS is a specific sampler designed to draw samples efficiently from the posterior using Hamiltonian Monte Carlo dynamics.
 # 
-# The following code snippet takes a `pyro` model object with posterior specfication, input data, and some configuration parameters such as a number of chians and numper of samples per chain. It then laucnhes a `NUTS` sampler and produces MCMC samples in a python dictionary format.
+# The following code snippet takes a [pyro](http://pyro.ai/examples/intro_part_i.html) model object with posterior specification, input data, some configuration parameters such as a number of chains and number of samples per chain. It then laucnhes a [NUTS](https://arxiv.org/pdf/1111.4246.pdf) sampler and produces MCMC samples in a python dictionary format.
 
 # In[7]:
 
 
-hmc_sample_chains= base.get_hmc_n_chains(DogsModel, x_avoidance, x_shocked, y, num_chains=4, base_count = 900)
+
+hmc_sample_chains, hmc_chain_diagnostics = base.get_hmc_n_chains(DogsModel, x_avoidance, x_shocked, y, num_chains=4, base_count = 900)
 
 
 # `hmc_sample_chains` holds sampled MCMC values as `{"Chain_0": {alpha	[-0.20020795, -0.1829252, -0.18054989 . .,], "beta": {}. .,}, "Chain_1": {alpha	[-0.20020795, -0.1829252, -0.18054989 . .,], "beta": {}. .,}. .}`
@@ -237,7 +272,6 @@ hmc_sample_chains= base.get_hmc_n_chains(DogsModel, x_avoidance, x_shocked, y, n
 
 
 beta_chain_matrix_df = pd.DataFrame(hmc_sample_chains)
-beta_chain_matrix_df.to_csv("data/dogs_log_regression_hmc_sample_chains.csv", index=False)
 beta_chain_matrix_df
 
 
@@ -245,7 +279,70 @@ beta_chain_matrix_df
 
 
 
+base.save_parameter_chain_dataframe(beta_chain_matrix_df, "data/dogs_parameter_chain_matrix.csv")
+
+
+# #### Sample chains mixing
+# Following plots chains of samples for alpha & beta parameters
+
+# In[10]:
+
+
+
 base.plot_chains(beta_chain_matrix_df)
+
+
+# In[ ]:
+
+
+# Inpecting Burnin [Y]
+# ACF & Thinning [Y]
+# mixing plots [Y]
+# Gelman-rubin statistic [Y]
+
+
+# In[11]:
+
+
+# get_chain_diagnostics(hmc_chain_diagnostics)
+base.get_chain_diagnostics(hmc_chain_diagnostics)
+
+
+# <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/4.7.0/css/font-awesome.css" integrity="sha512-5A8nwdMOWrSz20fDsjczgUidUBR8liPYU+WymTZP1lmY9G6Oc7HlZv156XqnsgNUzTyMefFTcsFH/tnJE/+xBg==" crossorigin="anonymous" />
+# <script src="https://cdnjs.cloudflare.com/ajax/libs/require.js/2.3.4/require.min.js"></script>
+# 
+# <script type="text/x-thebe-config">
+#   {
+#     requestKernel: true,
+#     binderOptions: {
+#       repo: "matplotlib/ipympl",
+#       ref: "0.6.1",
+#       repoProvider: "github",
+#     },
+#   }
+# </script>
+# <script src="https://unpkg.com/thebe@latest/lib/index.js"></script>
+# 
+# <button id="activateButton" style="width: 80px; height: 30px; font-size: 1em;">
+#   Activate
+# </button>
+# <script>
+# var bootstrapThebe = function() {
+#     thebelab.bootstrap();
+# }
+# document.querySelector("#activateButton").addEventListener('click', bootstrapThebe)
+# </script>
+
+# <pre data-executable="true" data-language="python">
+# 
+# base.autocorrelation_plots(beta_chain_matrix_df)
+# </pre>
+
+# In[12]:
+
+
+# autocorrelation_plots(beta_chain_matrix_df)
+base.autocorrelation_plots(beta_chain_matrix_df)
 
 
 # Based on simple multiple line plots, we can see that, in this run, `chain_3` is behaving differently than the remaining chains. It may be due to really a different initialization. Otherwise, all chains seem to mix well. Therefore, we drop `chain_3` from analysis. However, we need to be cautious about dropping, and we should check what is its effect on the actual predictions -- since sometimes, even though parameters can look very different numerically, they may have very little effect on the likelihood. Neverthless, it implies that either something is not right about the chain or the model is operating at the edge.
@@ -255,7 +352,13 @@ base.plot_chains(beta_chain_matrix_df)
 # 
 # Following outputs the summary of required statistics such as `"mean", "std", "Q(0.25)", "Q(0.50)", "Q(0.75)"`, select names of statistic metric from given list to view values
 
-# In[10]:
+# <pre data-executable="true" data-language="python">
+# 
+# base.summary(beta_chain_matrix_df)
+# 
+# </pre>
+
+# In[14]:
 
 
 
@@ -264,7 +367,7 @@ base.summary(beta_chain_matrix_df)
 
 # We can also report the 5-point Summary Statistics (mean, Q1-Q4, Std, ) as tabular data per chain and save the dataframe
 
-# In[11]:
+# In[20]:
 
 
 fit_df = pd.DataFrame()
@@ -274,30 +377,45 @@ for chain, values in hmc_sample_chains.items():
     fit_df= pd.concat([fit_df, param_df], axis=0)
 
 # fit_df.to_csv("data/dogs_classification_hmc_samples.csv", index=False)
-fit_df
+fit_df.head(3)
 
 
-# In[12]:
+# In[21]:
 
 
-# Use/Uncomment following once the results from pyro sampling operation are saved offline
-# fit_df= pd.read_csv("data/dogs_classification_hmc_samples.csv")
+# save_parameter_chain_dataframe(fit_df, "data/dogs_classification_hmc_samples.csv")
+base.save_parameter_chain_dataframe(fit_df, "data/dogs_classification_hmc_samples.csv")
 
+
+# In[22]:
+
+
+# Use following to load data once the results from pyro sampling operation are saved offline
+load_button= base.build_upload_button()
+
+
+# In[25]:
+
+
+# Use following to load data once the results from pyro sampling operation are 
+# saved offline
+if load_button.value:
+    fit_df = base.load_parameter_chain_dataframe(load_button)
 fit_df.head(3)
 
 
 # Following outputs the similar summary of required statistics such as `"mean", "std", "Q(0.25)", "Q(0.50)", "Q(0.75)"`, but in a slightly different format, given a list of statistic names
 
-# In[14]:
+# In[26]:
 
 
-summary_stats_df_2= base.summary_stats_df_2(fit_df, ["mean", "std", "25%", "50%", "75%"])
-summary_stats_df_2
+# summary_stats_df_2= base.summary_stats_df_2(fit_df, ["mean", "std", "25%", "50%", "75%"])
+base.summary(fit_df, layout =2)
 
 
 # Following plots sampled parameters values as Boxplots with `M parameters` side by side on x axis for each of the `N chains`
 
-# In[15]:
+# In[27]:
 
 
 parameters= ["alpha", "beta"]# All parameters for given model
@@ -306,7 +424,7 @@ chains= fit_df["chain"].unique()# Number of chains sampled for given model
 
 # Pass the list of `M parameters` and list of `N chains`, with `plot_interactive` as `True or False` to choose between Plotly or Seaborn
 
-# In[16]:
+# In[18]:
 
 
 # Use plot_interactive=False for Normal seaborn plots offline
@@ -316,7 +434,7 @@ base.plot_parameters_for_n_chains(fit_df, chains=['chain_0', 'chain_1', 'chain_2
 
 # Following plots the `joint distribution` of `pair of each parameter` sampled values for all chains
 
-# In[17]:
+# In[19]:
 
 
 
@@ -325,7 +443,7 @@ base.plot_joint_distribution(fit_df, parameters)
 
 # Following plots the `Pairplot distribution` of each parameter with every other parameter's sampled values
 
-# In[18]:
+# In[20]:
 
 
 sns.pairplot(data=fit_df, hue= "chain");
@@ -382,7 +500,7 @@ sns.pairplot(data=fit_df, hue= "chain");
 # Following method computes deviance value given parameters `alpha & beta`
 # <Br>
 
-# In[19]:
+# In[21]:
 
 
 #launch docstring for calculate_deviance_given_param
@@ -396,7 +514,7 @@ sns.pairplot(data=fit_df, hue= "chain");
 # 
 # <Br>
 
-# In[20]:
+# In[22]:
 
 
 #launch docstring for DIC
@@ -411,30 +529,113 @@ sns.pairplot(data=fit_df, hue= "chain");
 # Instead of considering Normal priors of $\alpha$ and $\beta$, we consider uniform priors, i.e.,
 # $prior\ \alpha$ ~ $U(0., 316.)$,  $\beta$ ~ $U(0., 316.)$
 
-# In[21]:
+# In[18]:
+
+
+# ??dist.Uniform
+
+# alpha = pyro.sample("alpha", dist.Uniform(-10, -0.00001))
+# beta = pyro.sample("beta", dist.Uniform(-10, -0.00001))
+
+
+# In[20]:
+
+
+# b= np.sqrt(316*3)# 30.78
+# a= -30.78
+
+
+# In[ ]:
+
+
+# mean = 0
+# var= 316
+# mean = 1/2(a+b)# a= -b
+# var= (1/12)(b-a)^2# 
+
+# 316 = (1/12)(2.b)^2
+
+
+# In[23]:
+
+
+def DogsModelUniformPrior(x_avoidance, x_shocked, y):
+        """
+        Input
+        -------
+        x_avoidance: tensor holding avoidance count for all dogs & all trials, example for 
+                    30 dogs & 25 trials, shaped (30, 25)
+        x_shocked:   tensor holding shock count for all dogs & all trials, example for 30 dogs
+                    & 25 trials, shaped (30, 25).
+        y:           tensor holding response for all dogs & trials, example for 30 dogs
+                    & 25 trials, shaped (30, 25).
+        
+        Output
+        --------
+        Implements pystan model: {
+                alpha ~ uniform(0.0, 316.2);
+                beta  ~ uniform(0.0, 316.2);
+                for(dog in 1:Ndogs)  
+                    for (trial in 2:Ntrials)  
+                    y[dog, trial] ~ bernoulli(exp(alpha * xa[dog, trial] + beta * xs[dog, trial]));}
+        
+        """
+        alpha = pyro.sample("alpha", dist.Uniform(-30.79, 30.79))
+        beta = pyro.sample("beta", dist.Uniform(-30.79, 30.79))
+        with pyro.plate("data"):
+            pyro.sample("obs", dist.Bernoulli(torch.exp(alpha*x_avoidance + beta * x_shocked)), obs=y)
+
+
+# In[24]:
 
 
 # # Dogs model with uniform prior
 
 #launch docstring for DogsModelUniformPrior
 
-DogsModelUniformPrior= base.DogsModelUniformPrior
+# DogsModelUniformPrior= base.DogsModelUniformPrior
 DogsModelUniformPrior
 
 
-# In[22]:
+# In[25]:
 
 
 
 hmc_sample_chains_uniform_prior= base.get_hmc_n_chains(DogsModelUniformPrior, x_avoidance, x_shocked, y, num_chains=4, base_count = 900)
 
 
+# In[22]:
+
+
+
+# hmc_sample_chains_uniform_prior= base.get_hmc_n_chains(DogsModelUniformPrior, x_avoidance, x_shocked, y, num_chains=4, base_count = 900)
+
+
+# In[27]:
+
+
+beta_chain_matrix_df_uniform = pd.DataFrame(hmc_sample_chains_uniform_prior)    
+base.plot_chains(beta_chain_matrix_df_uniform)
+
+
 # compute & compare `deviance information criterion` for a multiple bayesian models
+
+# In[26]:
+
+
+base.compare_DICs_given_model(x_avoidance, x_shocked, y, Dogs_normal_prior= hmc_sample_chains, Dogs_uniform_prior= hmc_sample_chains_uniform_prior)
+
+
+# In[ ]:
+
+
+
+
 
 # In[23]:
 
 
-base.compare_DICs_given_model(x_avoidance, x_shocked, y, Dogs_normal_prior= hmc_sample_chains, Dogs_uniform_prior= hmc_sample_chains_uniform_prior)
+# base.compare_DICs_given_model(x_avoidance, x_shocked, y, Dogs_normal_prior= hmc_sample_chains, Dogs_uniform_prior= hmc_sample_chains_uniform_prior)
 
 
 # The DIC values are very close, so we dontr anticipate subtantially different fits. This is largely because, both priors are flat. However, if were to follow the rule book, we had to pick a model with the smallst DIC. In that case, we have to pick Uniform Priors over Normal Priors.

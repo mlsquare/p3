@@ -45,3 +45,8 @@ parse:
 html:
   use_issues_button: true
   use_repository_button: true
+
+launch_buttons:
+  binderhub_url: "https://mybinder.org" 
+  thebe: true
+  # colab_url: "https://colab.research.google.com"
