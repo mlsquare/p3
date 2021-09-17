@@ -178,7 +178,7 @@ class base(object):
         return xa, xs, y
     
     @staticmethod
-    def get_hmc_n_chains(pyromodel, xa, xs, y, num_chains=4, base_count = 900):
+    def get_hmc_n_chains(pyromodel, xa, xs, y, num_chains=4, sample_count = 1000, burnin_percentage = 0.1, thining_percentage =0.1):
         """
         Input
         -------
@@ -187,7 +187,9 @@ class base(object):
         xs: tensor holding shock count for all dogs & all trials
         y: tensor holding response observation for all dogs & all trials
         num_chains: Count of MCMC chains to launch, default 4
-        base_count:Minimum count of samples in a MCMC chains , default 900
+        sample_count: count of samples expected in a MCMC chains , default 1000
+        burnin_percentage:
+        thining_percentage: 
         
         Outputs
         ---------
@@ -197,13 +199,12 @@ class base(object):
         """
         hmc_sample_chains =defaultdict(dict)
         hmc_chain_diagnostics =defaultdict(dict)
-        
-        possible_samples_list= random.sample(list(np.arange(base_count, base_count+num_chains*100, 50)), num_chains)
-        possible_burnin_list= random.sample(list(np.arange(100, 500, 50)), num_chains)
+
+        net_sample_count= round(sample_count/((1- burnin_percentage)*(1- thining_percentage)))
 
         t1= time.time()
-        for idx, val in enumerate(list(zip(possible_samples_list, possible_burnin_list))):
-            num_samples, burnin= val[0], val[1]
+        for idx in range(num_chains):
+            num_samples, burnin= net_sample_count, round(net_sample_count*burnin_percentage)
             nuts_kernel = NUTS(pyromodel)
             mcmc = MCMC(nuts_kernel, num_samples=num_samples, warmup_steps=burnin)
             mcmc.run(xa, xs, y)
