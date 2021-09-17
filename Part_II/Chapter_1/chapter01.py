@@ -216,7 +216,38 @@ class base(object):
         hmc_chain_diagnostics= dict(hmc_chain_diagnostics)
         
         return hmc_sample_chains, hmc_chain_diagnostics
+    
+    
+    @staticmethod
+    def prune_hmc_samples(hmc_sample_chains, thining_dict):
+        """
+        Input
+        -------
+        hmc_sample_chains: a dictionary with chain names as keys & dictionary of parameter vs sampled values list as values 
+        thining_dict: a dictionary with chain names as keys & dictionary of parameter vs thining factor list as values 
+                      example:  {"chain_0": {"alpha":6, "beta":3}, "chain_1": {"alpha":7, "beta":3}}
 
+
+        Outputs
+        ---------
+        Outputs a pruned version of hmc_sample_chains in accordance with respective thining factors.
+
+        """
+        pruned_hmc_sample_chains= defaultdict(dict)
+        for chain, params_dict in hmc_sample_chains.items():
+            pruned_hmc_sample_chains[chain]= dict(map(lambda val: (val[0], params_dict[val[0]][0:-1:val[1]]), list(thining_dict[chain].items())))
+            
+            original_sample_shape_dict= dict(map(lambda val: (val[0], val[1].shape), list(params_dict.items())))
+            pruned_sample_shape_dict = dict(map(lambda val: (val[0], val[1].shape), list(pruned_hmc_sample_chains[chain].items())))
+            
+            print("%s\nOriginal sample counts for '%s' parameters: %s"%("-"*25, chain, original_sample_shape_dict))
+            print("\nThining factors for '%s' parameters: %s "%(chain, thining_dict[chain]))
+            print("Post thining sample counts for '%s' parameters: %s\n\n"%(chain, trimmed_sample_shape_dict))
+
+        pruned_hmc_sample_chains= dict(pruned_hmc_sample_chains)
+
+        return pruned_hmc_sample_chains
+    
     @staticmethod
     def get_chain_diagnostics(hmc_chain_diagnostics):
         """
