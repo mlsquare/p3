@@ -177,6 +177,64 @@ class base(object):
         y= torch.tensor(y, dtype=torch.float)
 
         return xa, xs, y
+
+    @staticmethod
+    def simulate_observations_given_param(init_obs=None, num_dogs=1, num_trials=30, 
+                                      parameter_pair_list= [(-2.490809, -1.642264)], print_logs=0, print_exceptions=0):
+        t1= time.time()
+        simulated_data_given_pair = []
+        for alpha, beta in parameter_pair_list:
+            simulated_y= []# Dogs level list
+            try:
+                if (alpha>=20)|(beta>=20):
+                    raise ValueError("P_avoidance_ij will likely be Negative")
+                for dog in range(num_dogs):
+                    Y_list = [0]# Trials level list, This holds P(Y=1), where Y is avoidance
+                    random_trial = init_obs if init_obs else np.random.randint(2)
+                    for trial in range(num_trials):
+                        Y_list.append(random_trial)
+                        test_data = {'Y': np.array([Y_list])}
+                        test_data["Ndogs"]= len(test_data["Y"])#len(Y_list) 
+                        test_data["Ntrials"]= len(Y_list)
+
+                        test_x_avoided, test_x_shocked, _ = base.transform_data(**test_data)
+                        if print_logs:
+                            print("____\n\nFor Priors alpha: %s | beta: %s | trial: %s"%(alpha, beta, trial))
+                            print("test_data: ", test_data)
+                            print("trial number %s observations -- %s, %s"%(trial, test_x_avoided, test_x_shocked))
+
+                        calculate_pij = lambda alpha, beta, test_x_avoided, test_x_shocked: np.exp(alpha*np.array(test_x_avoided) + 
+                                                                                        beta*np.array(test_x_shocked))
+
+                        Pij_arr= calculate_pij(alpha, beta, test_x_avoided, test_x_shocked)# 𝜋𝑖𝑗=exp(𝛼𝑋𝑎+𝛽𝑋𝑠),𝜋𝑖𝑗 is P(getting shocked)
+                        Pij= Pij_arr[0][-1]# Pij, P(getting shocked) for last trial
+
+                        P_avoidance_ij = 1-Pij
+    #                     if P_avoidance_ij<0:
+    #                         break
+
+                        obs_y= np.random.binomial(1, P_avoidance_ij)# obs_y =1 indicates avoidance as success
+                        random_trial = obs_y
+
+                        if print_logs:
+                            print("Pij for trial number %s --  %s"%(trial, Pij))
+                            print("Next observed trial: %s"%random_trial)
+
+    #                 if P_avoidance_ij<0:
+    #                     break
+                    simulated_y.append(Y_list)
+    #             if P_avoidance_ij<0:
+    #                 raise ValueError("P_avoidance_ij can't be Negative")                
+                simulated_data_given_pair.append(simulated_y)
+            except Exception as error:
+                if print_exceptions:
+                    print("Issue '%s' with parameter pair: %s"%(error, [alpha, beta]))
+                
+        simulated_data_given_pair= np.array(simulated_data_given_pair)
+        total_time= time.time()- t1
+        print("Total execution time: %s\n"%total_time)
+        
+        return simulated_data_given_pair
     
     @staticmethod
     def get_hmc_n_chains(pyromodel, xa, xs, y, num_chains=4, sample_count = 1000, burnin_percentage = 0.1, thining_percentage =0.9):
