@@ -109,16 +109,16 @@ class base(object):
         Output
         --------
         Implements pystan model: {
-                alpha ~ uniform(0.0, 316.2);
-                beta  ~ uniform(0.0, 316.2);
+                alpha ~ uniform(-30.79, 30.79);
+                beta  ~ uniform(-30.79, 30.79);
                 for(dog in 1:Ndogs)  
                     for (trial in 2:Ntrials)  
                     y[dog, trial] ~ bernoulli(exp(alpha * xa[dog, trial] + beta * xs[dog, trial]));}
         
         """
         sigmoid = lambda value: 1/(1+torch.exp(-value))
-        alpha = pyro.sample("alpha", dist.Uniform(-10, 10))
-        beta = pyro.sample("beta", dist.Uniform(-10, 10))
+        alpha = pyro.sample("alpha", dist.Uniform(-30.79, 30.79))
+        beta = pyro.sample("beta", dist.Uniform(-30.79, 30.79))
         with pyro.plate("data"):
             pyro.sample("obs", dist.Bernoulli(sigmoid(alpha*x_avoidance + beta * x_shocked)), obs=y)
 
