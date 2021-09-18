@@ -88,11 +88,11 @@ class base(object):
                     y[dog, trial] ~ bernoulli(exp(alpha * xa[dog, trial] + beta * xs[dog, trial]));}
         
         """
-
+        sigmoid = lambda value: 1/(1+torch.exp(-value))
         alpha = pyro.sample("alpha", dist.Normal(0., 316.))
         beta = pyro.sample("beta", dist.Normal(0., 316))
         with pyro.plate("data"):
-            pyro.sample("obs", dist.Bernoulli(torch.exp(alpha*x_avoidance + beta * x_shocked)), obs=y)
+            pyro.sample("obs", dist.Bernoulli(sigmoid(alpha*x_avoidance + beta * x_shocked)), obs=y)
 
     @staticmethod
     def DogsModelUniformPrior(x_avoidance, x_shocked, y):
@@ -116,10 +116,11 @@ class base(object):
                     y[dog, trial] ~ bernoulli(exp(alpha * xa[dog, trial] + beta * xs[dog, trial]));}
         
         """
-        alpha = pyro.sample("alpha", dist.Uniform(-10, -0.00001))
-        beta = pyro.sample("beta", dist.Uniform(-10, -0.00001))
+        sigmoid = lambda value: 1/(1+torch.exp(-value))
+        alpha = pyro.sample("alpha", dist.Uniform(-10, 10))
+        beta = pyro.sample("beta", dist.Uniform(-10, 10))
         with pyro.plate("data"):
-            pyro.sample("obs", dist.Bernoulli(torch.exp(alpha*x_avoidance + beta * x_shocked)), obs=y)
+            pyro.sample("obs", dist.Bernoulli(sigmoid(alpha*x_avoidance + beta * x_shocked)), obs=y)
 
     @staticmethod
     def load_data():
@@ -183,11 +184,12 @@ class base(object):
                                       parameter_pair_list= [(-2.490809, -1.642264)], print_logs=0, print_exceptions=0):
         t1= time.time()
         simulated_data_given_pair = []
+        sigmoid = lambda value: 1/(1+np.exp(-value))
         for alpha, beta in parameter_pair_list:
             simulated_y= []# Dogs level list
             try:
-                if (alpha>=20)|(beta>=20):
-                    raise ValueError("P_avoidance_ij will likely be Negative")
+                # if (alpha>=20)|(beta>=20):
+                #     raise ValueError("P_avoidance_ij will likely be Negative")
                 for dog in range(num_dogs):
                     Y_list = [0]# Trials level list, This holds P(Y=1), where Y is avoidance
                     random_trial = init_obs if init_obs else np.random.randint(2)
@@ -203,7 +205,7 @@ class base(object):
                             print("test_data: ", test_data)
                             print("trial number %s observations -- %s, %s"%(trial, test_x_avoided, test_x_shocked))
 
-                        calculate_pij = lambda alpha, beta, test_x_avoided, test_x_shocked: np.exp(alpha*np.array(test_x_avoided) + 
+                        calculate_pij = lambda alpha, beta, test_x_avoided, test_x_shocked: sigmoid(alpha*np.array(test_x_avoided) + 
                                                                                         beta*np.array(test_x_shocked))
 
                         Pij_arr= calculate_pij(alpha, beta, test_x_avoided, test_x_shocked)# 𝜋𝑖𝑗=exp(𝛼𝑋𝑎+𝛽𝑋𝑠),𝜋𝑖𝑗 is P(getting shocked)
@@ -828,9 +830,10 @@ class base(object):
         Outputs a dictionary with tuple of alpha, beta as key & observerd values of y corresponding to alpha, beta in key
         
         """
+        sigmoid = lambda value: 1/(1+np.exp(-value))
         y_dict = {}
         for alpha, beta in select_pairs:# pair of alpha, beta
-            y_dict[(alpha, beta)] = torch.exp(alpha*x_a + beta* x_s)
+            y_dict[(alpha, beta)] = sigmoid(alpha*x_a + beta* x_s)
         
         return y_dict
 
@@ -982,9 +985,11 @@ class base(object):
         Returns deviance value for a pair for parameters, alpha & beta.
         
         """
-
+        sigmoid = lambda value: 1/(1+torch.exp(-value))
         D_bt_ = []
         p = parameters["alpha"]*x_avoidance + parameters["beta"]*x_shocked# alpha * Xai + beta * Xsi
+        #  𝛼𝑋𝑎𝑖 +𝛽 𝑋𝑠𝑖= -log(1/sigmoid(𝛼𝑋𝑎𝑖 +𝛽 𝑋𝑠𝑖)- 1)
+        p= -torch.log((1/sigmoid(p)) - 1)
         p=p.double()
         p= torch.where(p<-0.0001, p, -0.0001).float()
         
@@ -992,7 +997,10 @@ class base(object):
         Yij_vec= y.flatten().unsqueeze(0)# shapes (1, 750)
         
         # D_bt = -2 * Summation_over_i-30 (yi.(alpha.Xai + beta.Xsi)+ (1-yi).log (1- e^(alpha.Xai + beta.Xsi)))
-        D_bt= torch.mm(Yij_vec, Pij_vec) + torch.mm(1-Yij_vec, torch.log(1- torch.exp(Pij_vec)))
+
+        # exp(𝛼𝑋𝑎𝑖 +𝛽 𝑋𝑠𝑖) = sigmoid(𝛼𝑋𝑎𝑖 +𝛽 𝑋𝑠𝑖)
+
+        D_bt= torch.mm(Yij_vec, Pij_vec) + torch.mm(1-Yij_vec, torch.log(1- sigmoid(Pij_vec)))
         D_bt= -2*D_bt.squeeze().item()
         return D_bt
 
