@@ -51,7 +51,8 @@ class base(object):
         Plots scatter plot of all observed values of y corresponding to each given pair of alpha, beta
 
         """
-        num_dogs = base.load_data()["Ndogs"] if original_obs.ndim!=1 else 1
+        # num_dogs = base.load_data()["Ndogs"] if original_obs.ndim!=1 else 1
+        num_dogs = original_obs.shape[0] if original_obs.ndim!=1 else 1
         obs_column_names = [f'Dog_{ind+1}' for ind in range(num_dogs)] if num_dogs!=1 else ["Dogs"]
         obs_y_df= pd.DataFrame(original_obs.T, columns=obs_column_names)
 
@@ -178,7 +179,7 @@ class base(object):
         return xa, xs, y
     
     @staticmethod
-    def get_hmc_n_chains(pyromodel, xa, xs, y, num_chains=4, sample_count = 1000, burnin_percentage = 0.1, thining_percentage =0.1):
+    def get_hmc_n_chains(pyromodel, xa, xs, y, num_chains=4, sample_count = 1000, burnin_percentage = 0.1, thining_percentage =0.9):
         """
         Input
         -------
