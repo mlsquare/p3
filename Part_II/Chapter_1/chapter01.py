@@ -235,6 +235,81 @@ class base(object):
         print("Total execution time: %s\n"%total_time)
         
         return simulated_data_given_pair
+
+    @staticmethod
+    def compute_grubin(param_chains_sample_dict):
+        """
+        Input
+        -------
+        param_chains_sample_dict: dictionary with alpha, beta as keys and
+                                array of chains of sample parameters values.
+                                example: {'alpha': array([[-0.18649854, ..,-0.19441406]]), 
+                                            'beta': array([[-0.18322189, ..,-0.19441406]])}
+
+        Output
+        -------
+        Returns gelman-rubin statistics value.
+        """
+        grubin_dict= {}
+        for param, chain_list in param_chains_sample_dict.items():
+            L = float(min(list(map(len, chain_list))))# find minimum of the chain
+            num_chains_J = float(len(chain_list))
+            chain_mean = np.mean(chain_list, axis=1).reshape((-1,1))# shape (2, 1)
+
+            grand_chain_mean = np.mean(chain_mean)# constant
+
+            B= L*np.reciprocal(num_chains_J-1)*np.sum(np.square(chain_mean-grand_chain_mean))# constant
+
+            Sj_square= np.reciprocal(L-1)*np.sum(np.square(chain_list - chain_mean))# constant
+
+            W= np.mean(Sj_square)
+
+            grubin = round(((L-1)*np.reciprocal(L)*W + np.reciprocal(L)*B)/W, 4)
+            grubin_dict[param]= grubin
+            print("\nGelmen-rubin for 'param' %s all chains is: %s"%(param, grubin))
+        
+        return grubin_dict
+
+    
+    @staticmethod
+    def gelman_rubin_stats(pruned_hmc_sample_chains):
+        """
+        Input
+        -------
+        pruned_hmc_sample_chains: dictionary with alpha, beta as keys and
+                                array of chains of sample parameters values.
+                                example: {'alpha': array([[-0.18649854, ..,-0.19441406]]), 
+                                            'beta': array([[-0.18322189, ..,-0.19441406]])}
+
+        Output
+        -------
+        Returns gelman-rubin statistics value given hmcs samples.
+        """
+        param_chains_sample_dict_= {}
+        param_chain_list_ = list(map(lambda chain: (tuple(pruned_hmc_sample_chains[chain].keys()), chain), 
+                                    list(pruned_hmc_sample_chains)))
+
+        def starighten_up(records):
+            return list(map(lambda param:(param, records[1]), records[0]))
+
+        param_chain_list= list(itertools.chain.from_iterable(map(starighten_up, param_chain_list_)))
+
+        param_chains_sample_dict= defaultdict(list)
+        list(map(lambda val: param_chains_sample_dict[val[0]].append(val[1]), param_chain_list));
+
+        for param, chain_list in param_chains_sample_dict.items():
+            param_chain_list=[]
+            L = min(list(map(lambda chain: len(pruned_hmc_sample_chains[chain][param]), chain_list)))# find minimum of the chain
+            for chain in chain_list:
+                samples_arr = pruned_hmc_sample_chains[chain][param]
+                param_chain_list.append(samples_arr[:L].reshape((1, -1)))
+
+            param_chains_sample_dict_[param]= np.concatenate(param_chain_list, axis=0)# Contains dict of arrays of alpha/beta chains
+        
+    #     grubin_dict= compute_grubin(param_chains_sample_dict_)
+        grubin_dict= base.compute_grubin(param_chains_sample_dict_)
+
+        return grubin_dict
     
     @staticmethod
     def get_hmc_n_chains(pyromodel, xa, xs, y, num_chains=4, sample_count = 1000, burnin_percentage = 0.1, thining_percentage =0.9):
@@ -301,7 +376,7 @@ class base(object):
             
             print("%s\nOriginal sample counts for '%s' parameters: %s"%("-"*25, chain, original_sample_shape_dict))
             print("\nThining factors for '%s' parameters: %s "%(chain, thining_dict[chain]))
-            print("Post thining sample counts for '%s' parameters: %s\n\n"%(chain, trimmed_sample_shape_dict))
+            print("Post thining sample counts for '%s' parameters: %s\n\n"%(chain, pruned_sample_shape_dict))
 
         pruned_hmc_sample_chains= dict(pruned_hmc_sample_chains)
 
