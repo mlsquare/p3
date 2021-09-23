@@ -102,6 +102,61 @@ class base(object):
             pyro.sample("obs", dist.Bernoulli(activation_function(activation, alpha*x_avoidance + beta * x_shocked)), obs=y)
 
     @staticmethod
+    def init_priors(prior_dict={"default":dist.Normal(0., 316.)}):
+        """
+        Input
+        -------
+
+
+        
+        Output
+        --------
+        """
+        prior_dict["names"]= prior_dict.get("names") if prior_dict.get("names") else ["alpha", "beta"] 
+        # if not prior_dict.get("names"):
+        #     raise Exception("pass 'parameters name as list' to key 'names', example: {'names': ['alpha', 'beta']}")
+        if not prior_dict.get("default"):
+            raise Exception("pass a deafault distribution to key 'default' for parameters ['alpha', 'beta']}")
+        prior_list = []
+        [prior_list.append(prior_dict.get(param, prior_dict.get("default"))) for param in prior_dict.get("names")];
+        return prior_list
+
+    @staticmethod
+    def get_prior_samples(alpha_prior, beta_prior, num_samples=1100):
+        """
+        Input
+        -------
+
+
+        
+        Output
+        --------
+        """
+        priors_list= [(pyro.sample("alpha", alpha_prior).item(), 
+                pyro.sample("beta", beta_prior).item()) for index in range(num_samples)]# Picking 1100 prior samples
+        prior_samples = {"alpha":list(map(lambda prior_pair:prior_pair[0], priors_list)), 
+                        "beta":list(map(lambda prior_pair:prior_pair[1], priors_list))}
+
+        return prior_samples
+
+    @staticmethod
+    def plot_prior_distributions(**kwargs):
+        """
+        Input
+        -------
+
+
+        
+        Output
+        --------
+        """
+        for model_name, prior_samples in kwargs.items():
+            print("For model '%s' Prior alpha Q(0.5) :%s | Prior beta Q(0.5) :%s"%(model_name, np.quantile(prior_samples["alpha"], 0.5), np.quantile(prior_samples["beta"], 0.5)))
+            fig = ff.create_distplot(list(prior_samples.values()), list(prior_samples.keys()))
+            fig.update_layout(title="Prior distribution of '%s' parameters"%(model_name), xaxis_title="parameter values", yaxis_title="density", legend_title="parameters")
+            fig.show()
+    
+    @staticmethod
     def DogsModelUniformPrior(x_avoidance, x_shocked, y):
         """
         Input
@@ -188,15 +243,22 @@ class base(object):
 
     @staticmethod
     def simulate_observations_given_param(init_obs=None, num_dogs=1, num_trials=30, 
-                                      parameter_pair_list= [(-2.490809, -1.642264)], print_logs=0, print_exceptions=0):
+                                      parameter_pair_list= [(-2.490809, -1.642264)], activation = "exp", print_logs=0, print_exceptions=0):
+        """
+        Input
+        -------
+
+
+        
+        Output
+        --------
+        """
         t1= time.time()
         simulated_data_given_pair = []
-        sigmoid = lambda value: 1/(1+np.exp(-value))
+        activation_function = lambda name, value: {"sigmoid": 1/(1+np.exp(-value)), "exp":np.exp(-value)}.get(name)
         for alpha, beta in parameter_pair_list:
             simulated_y= []# Dogs level list
             try:
-                # if (alpha>=20)|(beta>=20):
-                #     raise ValueError("P_avoidance_ij will likely be Negative")
                 for dog in range(num_dogs):
                     Y_list = [0]# Trials level list, This holds P(Y=1), where Y is avoidance
                     random_trial = init_obs if init_obs else np.random.randint(2)
@@ -212,15 +274,13 @@ class base(object):
                             print("test_data: ", test_data)
                             print("trial number %s observations -- %s, %s"%(trial, test_x_avoided, test_x_shocked))
 
-                        calculate_pij = lambda alpha, beta, test_x_avoided, test_x_shocked: sigmoid(alpha*np.array(test_x_avoided) + 
+                        calculate_pij = lambda alpha, beta, test_x_avoided, test_x_shocked: activation_function(activation, alpha*np.array(test_x_avoided) + 
                                                                                         beta*np.array(test_x_shocked))
 
                         Pij_arr= calculate_pij(alpha, beta, test_x_avoided, test_x_shocked)# 𝜋𝑖𝑗=exp(𝛼𝑋𝑎+𝛽𝑋𝑠),𝜋𝑖𝑗 is P(getting shocked)
                         Pij= Pij_arr[0][-1]# Pij, P(getting shocked) for last trial
 
                         P_avoidance_ij = 1-Pij
-    #                     if P_avoidance_ij<0:
-    #                         break
 
                         obs_y= np.random.binomial(1, P_avoidance_ij)# obs_y =1 indicates avoidance as success
                         random_trial = obs_y
@@ -229,22 +289,77 @@ class base(object):
                             print("Pij for trial number %s --  %s"%(trial, Pij))
                             print("Next observed trial: %s"%random_trial)
 
-    #                 if P_avoidance_ij<0:
-    #                     break
+
                     simulated_y.append(Y_list)
-    #             if P_avoidance_ij<0:
-    #                 raise ValueError("P_avoidance_ij can't be Negative")                
                 simulated_data_given_pair.append(simulated_y)
             except Exception as error:
                 if print_exceptions:
                     print("Issue '%s' with parameter pair: %s"%(error, [alpha, beta]))
-                
+
         simulated_data_given_pair= np.array(simulated_data_given_pair)
         total_time= time.time()- t1
         print("Total execution time: %s\n"%total_time)
-        
+
         return simulated_data_given_pair
 
+    @staticmethod
+    def simulate_observations_given_prior_posterior_pairs(original_data, init_obs=None, num_dogs=30, num_trials=24, activation_type= "exp", prior_simulations= None, **kwargs):
+        """
+        Input
+        -------
+
+
+        
+        Output
+        --------
+        """
+        simulated_arr_list= []
+        flag = "posterior" if prior_simulations is not None else "prior"
+        note_text= "Here "
+        for idx, content in enumerate(kwargs.items()):
+            model_name, prior_samples = content
+            print("___________\n\nFor model '%s' %s"%(model_name, flag))
+            parameters_pairs = list(zip(*list(prior_samples.values())))
+            print("total samples count:", len(parameters_pairs), " sample example: ", parameters_pairs[:2])
+
+            simulated_data_given_pair= base.simulate_observations_given_param(init_obs=init_obs, num_dogs=num_dogs, num_trials=num_trials, 
+                                                                        parameter_pair_list= parameters_pairs, activation=activation_type)#, print_logs=1
+
+            print("Number of datasets/%s pairs generated: %s"%(flag, simulated_data_given_pair.shape[0]))
+            
+            simulated_data_given_pair_flattened = np.reshape(simulated_data_given_pair, (-1, 25))
+            
+            simulated_arr=np.mean(simulated_data_given_pair_flattened, axis=0)
+            print("Shape of data simulated from %s for model '%s' : %s"%(flag, model_name, simulated_arr.shape))
+            simulated_arr_list.append(simulated_arr.reshape((1, -1)))
+            note_text+="'Dog_%s' corresponds to observations simulated from %s of '%s', "%(idx+1, flag, model_name)
+        
+        l_idx = idx+1#last index
+        original_data_arr = np.mean(original_data, axis=0)# Append original dogs data
+
+        if prior_simulations is not None:
+            original_plus_simulated_data= np.concatenate(simulated_arr_list)
+            original_plus_simulated_data= np.concatenate([original_plus_simulated_data, prior_simulations])
+    #         for idx in range(1, len(prior_simulations)+1):
+            for idx, content in enumerate(kwargs.items()):
+                model_name, _ = content
+                note_text+="'Dog_%s' corresponds to observations simulated from prior of '%s', "%(l_idx+idx+1, model_name)
+            ylabel_text= 'Probability of avoidance at trial j [original & simulated priors, posteriros]'
+            l_idx+=idx+1
+        else:
+            simulated_arr_list.append(original_data_arr.reshape((1, -1)))
+            original_plus_simulated_data= np.concatenate(simulated_arr_list)
+            ylabel_text= 'Probability of avoidance at trial j [original & simulated priors]'
+        print("Respective shape of original data: %s and concatenated arrays of data simulated for different priors/posteriors: %s"%(original_data_arr.shape, original_plus_simulated_data.shape))
+
+        note_text = note_text[:-2]
+        note_text+=" & 'Dog_%s' corresponds to 'Original data'."%(l_idx+1)
+        print("\n%s\n%s\n%s"%("_"*55, "_"*70, note_text))
+        
+        base.plot_original_y(original_plus_simulated_data, ylabel=ylabel_text)
+
+        return original_plus_simulated_data
+    
     @staticmethod
     def compute_grubin(param_chains_sample_dict):
         """
@@ -321,7 +436,9 @@ class base(object):
         return grubin_dict
     
     @staticmethod
-    def get_hmc_n_chains(pyromodel, xa, xs, y, num_chains=4, sample_count = 1000, burnin_percentage = 0.1, thining_percentage =0.9):
+    def get_hmc_n_chains(pyromodel, xa, xs, y, num_chains=4, sample_count = 1000, 
+                     burnin_percentage = 0.1, thining_percentage =0.9, 
+                     alpha_prior= None, beta_prior= None, activation= "exp"):
         """
         Input
         -------
@@ -333,12 +450,12 @@ class base(object):
         sample_count: count of samples expected in a MCMC chains , default 1000
         burnin_percentage:
         thining_percentage: 
-        
+
         Outputs
         ---------
         hmc_sample_chains: a dictionary with chain names as keys & dictionary of parameter vs sampled values list as values 
         hmc_chain_diagnostics: a dictionary with chain names as keys & dictionary of chain diagnostic metric values from hmc sampling. 
-        
+
         """
         hmc_sample_chains =defaultdict(dict)
         hmc_chain_diagnostics =defaultdict(dict)
@@ -350,16 +467,16 @@ class base(object):
             num_samples, burnin= net_sample_count, round(net_sample_count*burnin_percentage)
             nuts_kernel = NUTS(pyromodel)
             mcmc = MCMC(nuts_kernel, num_samples=num_samples, warmup_steps=burnin)
-            mcmc.run(xa, xs, y)
+            mcmc.run(xa, xs, y, alpha_prior= alpha_prior, beta_prior= beta_prior, activation= activation)
             hmc_sample_chains['chain_{}'.format(idx)]={k: v.detach().cpu().numpy() for k, v in mcmc.get_samples().items()}
             hmc_chain_diagnostics['chain_{}'.format(idx)]= mcmc.diagnostics()
 
         print("\nTotal time: ", time.time()-t1)
         hmc_sample_chains= dict(hmc_sample_chains)
         hmc_chain_diagnostics= dict(hmc_chain_diagnostics)
-        
+
         return hmc_sample_chains, hmc_chain_diagnostics
-    
+
     
     @staticmethod
     def prune_hmc_samples(hmc_sample_chains, thining_dict):
