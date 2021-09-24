@@ -6,7 +6,7 @@
 # 
 # ### 1. Introduction
 # 
-# Solomon-Wynne in 1953 conducted an experiment on Dogs. He wanted to understand, whether Dogs can learn from mistakes, so to speak. Specifically, They were interested in _avoidance-learning_. That is, when Dogs are given trauma-inducing shocks; Will they learn to avoid shocks in future?
+# Solomon and Wynne conducted an experiment on Dogs in 1953 . They wanted to understand, whether Dogs can learn from mistakes, so to speak. Specifically, They were interested in _avoidance-learning_. That is, when Dogs are given trauma-inducing shocks, will they learn to avoid shocks in future?
 # 
 # We can state the objectives of the expeirment, according to our understanding, in more general terms as follows:
 # 
@@ -15,7 +15,7 @@
 # 
 # The experimental setup, to drive the objectives, holds a dog in a closed compartment with steel flooring, open on one side with a small barrier for dog to jump over to the other side. A high-voltage electric shock is discharged into the steel floor intermittently to stimulate the dog. The dog is then left with an option to either get the shock for that trial or jump over the barrier to other side & save himself. Several dogs were recruited in the experiment.
 # 
-# The following picture is an illustration of the setup.
+# The following picture ([source](https://commons.wikimedia.org/wiki/File:Shuttle_Box_Dog_Orange.png)) is an illustration of the setup.
 # <br>
 # <br>
 # ![dog_setup](./data/avoidance_learning.png)
@@ -64,7 +64,6 @@ import numpy as np
 
 pyro.set_rng_seed(1)
 
-
 plt.style.use('default')
 
 get_ipython().run_line_magic('matplotlib', 'inline')
@@ -73,30 +72,26 @@ get_ipython().run_line_magic('load_ext', 'autoreload')
 
 # #### Data
 # <br>
-# <br>
-# The data contains experiments over 30 dogs, each dog is subjected to 25 trials.
+# The data contains experiments over 30 dogs and each dog is subjected to 25 trials.
 # 
-# The plot that follows highlights Dogs data in dictionary format, averaged over dog population for each trial.
-# 
-# write latex for summation of `averaged over dog population for each trial.`
+# The plot that follows highlights Dogs data in dictionary format, averaged over dog population for each trial, i.e., $y_j   =   \frac{1}{30}\sum{y_{ij}}$ where $y_{ij}$ is the i-th Dog's response at the j-th trial.
 
 # In[2]:
 
 
 dogs_data = base.load_data()
-base.plot_original_y(np.mean(dogs_data["Y"], axis=0), ylabel='Probability of avoidance at trial j')
+base.plot_original_y(1-np.mean(dogs_data["Y"], axis=0), ylabel='Probability of shock at trial j')
 
 
 # Its apparent from experimental data that more than half the dog population learns to avoid shocks in trials as few as 5, and also that the learning doesn't significantly rise with increased number of trials.
 
 # #### Preprocessing
 # <br>
-# <br>
+# Next, we need to transform raw data to obtain
 # 
-# Following transforms target label `Y` to obtain input data `x_avoidance`, `x_shocked` & `y` where:
-# * `x_avoidance` :  number of shock avoidances before current trial.
-# * `x_shocked` :  number of shocks before current trial.
-# * `y`: Status 'shocked or avoided' at current trial.
+# - `x_avoidance` :  number of shock avoidances before current trial.
+# - `x_shocked` :  number of shocks before current trial.
+# - `y`: Status 'shocked (y=1) or avoided(y=0)' at current trial.
 # 
 # Here `pystan` format [data](https://github.com/stan-dev/example-models/blob/master/bugs_examples/vol1/dogs/dogs.data.R) (python dictionary) is passed to the function above, in order to preprocess it to tensor format required for pyro sampling.
 
@@ -123,31 +118,19 @@ base.plot_original_y(x_shocked.numpy(), ylabel='Cumulative Shocked Trials')
 # $\log(\pi_{ij})   =   \alpha x_{ij} + \beta({j-x_{ij}})$
 # <br>
 # <br>
-# Here, $y_{ij}=1$ if the a dog fails to avoid a shock at the j-th trial, and is 0 if it avoids. We elicit normal priors for $\alpha,\beta$ with zero mean and large variance (flat) to complete the specification. Also notice that, the above model is in a more familiar form (Generalized Linear Model or Log-Linear Model). For convenience, we can define $X_{a}\equiv x_{ij}, X_{s}\equiv j-x_{ij} $
-# <br>
-# <br>
-# The complete model is:
-# <br>
-# <br>
-# $y_{ij} \sim Bern(\pi_{ij})$ 
-# $\log(\pi_{ij})  =   \alpha X_{a} + \beta X_{s}$  
-# $\alpha \sim N(0., 316.)$
-# $\beta \sim N(0., 316.)$
+# Here, $y_{ij}=1$ if the a dog fails to avoid a shock at the j-th trial, and is 0 if it avoids. 
 # 
 # The above expression is used as a generalised linear model with log-link function in WinBugs implementation
 # <br>
-# <br>
 # #### BUGS model
 # <br>
-# <br>
-# 
 # $\log\pi_j = \alpha\ x_j + \beta\ ( $j$-x_j )$
 #    
-#    **Here**
-#    * $\log\pi_j$ is log probability of a dog getting shocked at trial $j$
-#    * $x_j$ is number of successful avoidances of shock prior to trial $j$.
-#    * $j-x_j$ is number of shocks experienced prior to trial $j$.
-#    *  $\alpha$ is the coefficient corresponding to number of successes, $\beta$ is the coefficient corresponding to number of failures.
+# Here
+#    - $\log\pi_j$ is log probability of a dog getting shocked at trial $j$
+#    - $x_j$ is number of successful avoidances of shock prior to trial $j$.
+#    - $j-x_j$ is number of shocks experienced prior to trial $j$.
+#    -  $\alpha$ is the coefficient corresponding to number of successes, $\beta$ is the coefficient corresponding to number of failures.
 #   
 # **Following code block is from original BUGS volume:**
 # 
@@ -172,7 +155,6 @@ base.plot_original_y(x_shocked.numpy(), ylabel='Cumulative Shocked Trials')
 #     }
 # ```
 # 
-# 
 # ____________________
 # The same model when implemented in PyStan
 #   
@@ -189,15 +171,63 @@ base.plot_original_y(x_shocked.numpy(), ylabel='Cumulative Shocked Trials')
 # }  
 # ```
 # 
+# 
+# In the orginal WinBUGS reference, $\alpha, \beta$ are given truncated Normal priors, but not `Stan`. Note that $\pi_{ij} > 1$ when $\alpha, \beta > 0$. Thefore, we have to restrict  $\alpha, \beta \le 0$
+# 
+# Consequently, we elicit half-normal priors for $\alpha,\beta$ with zero mean and large variance (flat) to complete the specification. Also notice that, the above model is in a more familiar form (Generalized Linear Model or Log-Linear Model). For convenience, we can define $X_{a}\equiv x_{ij}, X_{s}\equiv j-x_{ij} $
+# <br>
+# <br>
+# The complete model is:
+# <br>
+# <br>
+# $y_{ij} \sim Bern(\pi_{ij})$ 
+# <br>
+# $\log(\pi_{ij})  =   \alpha X_{a} + \beta X_{s}$
+# or
+# $\pi_{ij}  =   \exp{(\alpha X_{a} + \beta X_{s})}$
+# <br>
+# $\alpha \sim N(0., 316.)I(\alpha <0)$
+# <br>
+# $\beta \sim N(0., 316.)I(\beta <0)$
+# 
+# But it is easier to constrain r.vs on the posive real line. So, we simply absorb the negative sign inside the model.  Finally, we have these models, with Half-normal and Uniform priors s.t $\alpha, \beta > 0$
+# 
+# We experiment with the variants of the above models as follows:
+# 
+# __Model A.__
+# <br>
+# $y_{ij} \sim Bern(\pi_{ij})$
+# <br>
+# $\pi_{ij}  =   \exp{(-(\alpha X_{a} + \beta X_{s}))}$
+# 
+# $\alpha \sim N(0., 316.)\ I(\alpha>0)$
+# <br>
+# $\beta \sim N(0., 316.)\ I(\beta>0)$
+# 
+# __Model B.__
+# <br>
+# $y_{ij} \sim Bern(\pi_{ij})$
+# <br>
+# $\pi_{ij}  =   \exp{(-(\alpha X_{a} + \beta X_{s}))}$
+# 
+# $\alpha \sim U(0, 10.)$
+# <br>
+# $\beta \sim U(0, 10.)$
+# 
+# 
+# 
+# 
+# 
 
 # #### Model implementation
 # 
-# The above model is defined in `base.DogsModel`
+# The above model are defined in `base.DogsModel`
 
 # In[4]:
 
 
 DogsModel= base.DogsModel
+
 DogsModel
 
 
@@ -207,10 +237,12 @@ DogsModel
 
 
 num_samples = 1100 
-priors_list= [(pyro.sample("alpha", dist.Normal(0., 316.)).item(), 
-               pyro.sample("beta", dist.Normal(0., 316.)).item()) for index in range(num_samples)]# Picking 1100 prior samples
 
-prior_samples = {"alpha":list(map(lambda prior_pair:prior_pair[0], priors_list)), "beta":list(map(lambda prior_pair:prior_pair[1], priors_list))}
+alpha_prior_a, beta_prior_a= base.init_priors({"default":dist.HalfNormal(316.)})# Pass priors for model A
+prior_samples_a = base.get_prior_samples(alpha_prior_a, beta_prior_a, num_samples=num_samples)
+
+alpha_prior_b, beta_prior_b= base.init_priors({"default":dist.Uniform(0.001, 10)})# Pass uniform priors for model B
+prior_samples_b = base.get_prior_samples(alpha_prior_b, beta_prior_b, num_samples=num_samples)
 
 
 # Sampled output of prior values for alpha & beta is stored in `prior_samples` above, and is plotted on a KDE plot as follows:
@@ -218,11 +250,8 @@ prior_samples = {"alpha":list(map(lambda prior_pair:prior_pair[0], priors_list))
 # In[6]:
 
 
-fig = ff.create_distplot(list(prior_samples.values()), list(prior_samples.keys()))
-fig.update_layout(title="Prior distribution of parameters", xaxis_title="parameter values", yaxis_title="density", legend_title="parameters")
-fig.show()
 
-print("Prior alpha Q(0.5) :%s | Prior beta Q(0.5) :%s"%(np.quantile(prior_samples["alpha"], 0.5), np.quantile(prior_samples["beta"], 0.5)))
+base.plot_prior_distributions(model_halfnormal_a= prior_samples_a, model_uniform_b= prior_samples_b)
 
 
 # ### 3. Prior predictive checking
@@ -230,32 +259,10 @@ print("Prior alpha Q(0.5) :%s | Prior beta Q(0.5) :%s"%(np.quantile(prior_sample
 # In[7]:
 
 
-parameters_pairs = list(zip(*list(prior_samples.values())))
-print("total samples count:", len(parameters_pairs), " sample example: ", parameters_pairs[:2])
 
-
-simulated_data_given_pair= base.simulate_observations_given_param(init_obs=0, num_dogs=30, num_trials=24, parameter_pair_list= parameters_pairs)#, print_logs=1
-print("Number of datasets/prior pairs generated: ", simulated_data_given_pair.shape[0])
-
-
-# In[8]:
-
-
-simulated_data_given_pair_flattened = np.reshape(simulated_data_given_pair, (-1, 25))
-
-arr1 = np.mean(dogs_data["Y"], axis=0)
-arr2=np.mean(simulated_data_given_pair_flattened, axis=0)
-original_plus_simulated_data= np.concatenate([arr1.reshape((1, -1)), arr2.reshape((1, -1))])
-
-print("respective shapes of original data: %s, data simulated from prior: %s and concatenated arrays: %s"%(arr1.shape, arr2.shape, original_plus_simulated_data.shape))
-
-
-# In[10]:
-
-
-base.plot_original_y(original_plus_simulated_data, ylabel='Probability of avoidance at trial j [Both original & simulated prior data]')
-
-print("Here 'Dog 1' corresponds to Original data & 'Dog 2' corresponds to data simulated from prior")
+original_plus_simulated_prior_data = base.simulate_observations_given_prior_posterior_pairs(dogs_data["Y"], num_dogs=30, num_trials=24, 
+                                                                                            activation_type= "exp", model_halfnormal_a= prior_samples_a, 
+                                                                                            model_uniform_b= prior_samples_b)
 
 
 # Even though the mean and median can differ from run to run, looking at the densities, the variance is vary large -- so the sample mean would also have huge variance. The take-away is that, both $\alpha, \beta$ are given very weak priors. We more or less rely on the data (evidence) to drive their estimation.
@@ -284,11 +291,23 @@ print("Here 'Dog 1' corresponds to Original data & 'Dog 2' corresponds to data s
 # 
 # The following code snippet takes a [pyro](http://pyro.ai/examples/intro_part_i.html) model object with posterior specification, input data, some configuration parameters such as a number of chains and number of samples per chain. It then laucnhes a [NUTS](https://arxiv.org/pdf/1111.4246.pdf) sampler and produces MCMC samples in a python dictionary format.
 
-# In[11]:
+# In[8]:
 
 
+# DogsModel_A alpha, beta ~ HalfNormal(316.) & activation "exp"
 
-hmc_sample_chains, hmc_chain_diagnostics = base.get_hmc_n_chains(DogsModel, x_avoidance, x_shocked, y, num_chains=4, sample_count = 900)
+hmc_sample_chains_a, hmc_chain_diagnostics_a = base.get_hmc_n_chains(DogsModel, x_avoidance, x_shocked, y, num_chains=4, 
+                                                                     sample_count = 900, alpha_prior= dist.HalfNormal(316.), 
+                                                                     beta_prior= dist.HalfNormal(316.), activation= "exp")
+
+
+# In[9]:
+
+
+# DogsModel_B alpha, beta ~ Uniform(0., 10.0) & activation "exp"
+
+hmc_sample_chains_b, hmc_chain_diagnostics_b = base.get_hmc_n_chains(DogsModel, x_avoidance, x_shocked, y, num_chains=4, sample_count = 900, 
+                         alpha_prior= dist.Uniform(0., 10.0), beta_prior= dist.Uniform(0., 10.0), activation= "exp")
 
 
 # `hmc_sample_chains` holds sampled MCMC values as `{"Chain_0": {alpha	[-0.20020795, -0.1829252, -0.18054989 . .,], "beta": {}. .,}, "Chain_1": {alpha	[-0.20020795, -0.1829252, -0.18054989 . .,], "beta": {}. .,}. .}`
@@ -302,37 +321,88 @@ hmc_sample_chains, hmc_chain_diagnostics = base.get_hmc_n_chains(DogsModel, x_av
 # <br>
 # Following snippet allows plotting **Parameter vs. Chain matrix** and optionally saving the dataframe.
 
+# In[10]:
+
+
+# Unpruned sample chains for model A with HalfNormal prior
+
+beta_chain_matrix_df_A = pd.DataFrame(hmc_sample_chains_a)
+
+base.save_parameter_chain_dataframe(beta_chain_matrix_df_A, "data/dogs_parameter_chain_matrix_1A.csv")
+
+
+# In[11]:
+
+
+# Unpruned sample chains for model B with Uniform prior
+
+beta_chain_matrix_df_B = pd.DataFrame(hmc_sample_chains_b)
+
+base.save_parameter_chain_dataframe(beta_chain_matrix_df_B, "data/dogs_parameter_chain_matrix_1B.csv")
+
+
+# #### Sample chains mixing for `HalfNormal` & `Uniform` priors
+# Following plots chains of samples for alpha & beta parameters
+
 # In[12]:
 
 
-beta_chain_matrix_df = pd.DataFrame(hmc_sample_chains)
-beta_chain_matrix_df
+print("For 'model_HalfNormal_a'")    
+base.plot_chains(beta_chain_matrix_df_A)
+
+
+print("\nFor 'model_Uniform_b'")    
+base.plot_chains(beta_chain_matrix_df_B)
 
 
 # In[13]:
 
 
-# Unpruned sample chains
-base.save_parameter_chain_dataframe(beta_chain_matrix_df, "data/dogs_parameter_chain_matrix.csv")
+for chain, samples in hmc_sample_chains_a.items():
+    print("____\nFor model_HalfNormal_a %s"%chain)    
+    samples= dict(map(lambda param: (param, torch.tensor(samples.get(param))), samples.keys()))# np array to tensors
+    print(chain, "Sample count: ", len(samples["alpha"]))
+    print("Alpha Q(0.5) :%s | Beta Q(0.5) :%s"%(torch.quantile(samples["alpha"], 0.5), torch.quantile(samples["beta"], 0.5)))
 
+print("%s\n%s"%("_"*60, "_"*60))
 
-# #### Sample chains mixing for Normal priors
-# Following plots chains of samples for alpha & beta parameters
+for chain, samples in hmc_sample_chains_b.items():
+    print("____\nFor model_Uniform_b %s"%chain)    
+    samples= dict(map(lambda param: (param, torch.tensor(samples.get(param))), samples.keys()))# np array to tensors
+    print(chain, "Sample count: ", len(samples["alpha"]))
+    print("Alpha Q(0.5) :%s | Beta Q(0.5) :%s"%(torch.quantile(samples["alpha"], 0.5), torch.quantile(samples["beta"], 0.5)))
+
 
 # In[14]:
 
 
+for chain in hmc_sample_chains_a.keys():
+    print("____\nFor 'model_HalfNormal_a' & 'model_Uniform_b' %s"%chain)
+    chain_list= list(hmc_sample_chains_a[chain].values())
+    chain_list.extend(list(hmc_sample_chains_b[chain].values()))
+    title= "parameter distribution for : %s"%(chain)
+    fig = ff.create_distplot(chain_list, ["alpha_a", "beta_a", "alpha_b", "beta_b"])
+    fig.update_layout(title=title, xaxis_title="parameter values", yaxis_title="density", legend_title="parameters")
+    fig.show()
+    break
 
-base.plot_chains(beta_chain_matrix_df)
 
-
-# #### Auto-correlation plots for sample chains with Normal priors
+# #### Auto-correlation plots for sample chains with `HalfNormal` priors
 
 # In[15]:
 
 
 
-base.autocorrelation_plots(beta_chain_matrix_df)
+base.autocorrelation_plots(beta_chain_matrix_df_A)
+
+
+# #### Auto-correlation plots for sample chains with `Uniform` priors
+
+# In[16]:
+
+
+
+base.autocorrelation_plots(beta_chain_matrix_df_B)
 
 
 # For `alpha`, `thining factor` for `chain_0` is 3, `chain_1` is 3, `chain_2` is 3, `chain_3` is 3
@@ -341,35 +411,60 @@ base.autocorrelation_plots(beta_chain_matrix_df)
 # 
 # 
 
-# In[16]:
-
-
-
-thining_dict = {"chain_0": {"alpha":4, "beta":4}, "chain_1": {"alpha":4, "beta":4}, 
-                "chain_2": {"alpha":4, "beta":4}, "chain_3": {"alpha":4, "beta":4}}
-
+# #### Pruning chains from model with `HalfNormal` priors
 
 # In[17]:
 
 
+thining_dict_a = {"chain_0": {"alpha":3, "beta":3}, "chain_1": {"alpha":3, "beta":3}, 
+                "chain_2": {"alpha":3, "beta":3}, "chain_3": {"alpha":3, "beta":3}}
 
-pruned_hmc_sample_chains = base.prune_hmc_samples(hmc_sample_chains, thining_dict)
+pruned_hmc_sample_chains_a = base.prune_hmc_samples(hmc_sample_chains_a, thining_dict_a)
 
 
-# #### Gelman-Rubin statistic for Normal priors
+# #### Pruning chains from model with `Uniform` priors
 
 # In[18]:
 
 
+thining_dict_b = {"chain_0": {"alpha":3, "beta":3}, "chain_1": {"alpha":3, "beta":3}, 
+                "chain_2": {"alpha":3, "beta":3}, "chain_3": {"alpha":3, "beta":3}}
 
-grubin_values = base.gelman_rubin_stats(pruned_hmc_sample_chains)
+pruned_hmc_sample_chains_b = base.prune_hmc_samples(hmc_sample_chains_b, thining_dict_b)
 
+
+# #### Gelman-Rubin statistic for chains with `HalfNormal` priors
 
 # In[19]:
 
 
-# Following diagnostic table is for Un-pruned chains from sampler.
-base.get_chain_diagnostics(hmc_chain_diagnostics)
+
+grubin_values_a = base.gelman_rubin_stats(pruned_hmc_sample_chains_a)
+
+
+# #### Gelman-Rubin statistic for chains with `Uniform` priors
+
+# In[20]:
+
+
+
+grubin_values_b = base.gelman_rubin_stats(pruned_hmc_sample_chains_b)
+
+
+# In[21]:
+
+
+# Following diagnostic table is for Un-pruned chains from sampler with Normal prior.
+
+base.get_chain_diagnostics(hmc_chain_diagnostics_a)
+
+
+# In[22]:
+
+
+# Following diagnostic table is for Un-pruned chains from sampler with Uniform prior.
+
+base.get_chain_diagnostics(hmc_chain_diagnostics_b)
 
 
 # Based on simple multiple line plots, we can see that, in this run, `chain_3` is behaving differently than the remaining chains. It may be due to really a different initialization. Otherwise, all chains seem to mix well. Therefore, we drop `chain_3` from analysis. However, we need to be cautious about dropping, and we should check what is its effect on the actual predictions -- since sometimes, even though parameters can look very different numerically, they may have very little effect on the likelihood. Neverthless, it implies that either something is not right about the chain or the model is operating at the edge.
@@ -379,98 +474,166 @@ base.get_chain_diagnostics(hmc_chain_diagnostics)
 # 
 # Following outputs the summary of required statistics such as `"mean", "std", "Q(0.25)", "Q(0.50)", "Q(0.75)"`, select names of statistic metric from given list to view values
 
-# In[36]:
+# #### Summary for model chains with `HalfNormal` priors
+
+# In[23]:
 
 
 #chain results Pruned after ACF plots
 
-beta_chain_matrix_df = pd.DataFrame(pruned_hmc_sample_chains)
+beta_chain_matrix_df_A = pd.DataFrame(pruned_hmc_sample_chains_a)
 
-base.summary(beta_chain_matrix_df)
+base.summary(beta_chain_matrix_df_A)
+
+
+# #### Summary for model chains with `Uniform` priors
+
+# In[24]:
+
+
+#chain results Pruned after ACF plots
+
+beta_chain_matrix_df_B = pd.DataFrame(pruned_hmc_sample_chains_b)
+
+base.summary(beta_chain_matrix_df_B)
 
 
 # We can also report the 5-point Summary Statistics (mean, Q1-Q4, Std, ) as tabular data per chain and save the dataframe
 
-# In[21]:
+# #### 5-point Summary Statistics for model chains with `HalfNormal` priors
+
+# In[25]:
 
 
-fit_df = pd.DataFrame()
-for chain, values in pruned_hmc_sample_chains.items():
+fit_df_A = pd.DataFrame()
+for chain, values in pruned_hmc_sample_chains_a.items():
     param_df = pd.DataFrame(values)
     param_df["chain"]= chain
-    fit_df= pd.concat([fit_df, param_df], axis=0)
+    fit_df_A= pd.concat([fit_df_A, param_df], axis=0)
 
-# fit_df.to_csv("data/dogs_classification_hmc_samples.csv", index=False)
-fit_df.head(3)
-
-
-# In[22]:
+base.save_parameter_chain_dataframe(fit_df_A, "data/dogs_classification_hmc_samples_1A.csv")
 
 
+# #### 5-point Summary Statistics for model chains with `Uniform` priors
 
-base.save_parameter_chain_dataframe(fit_df, "data/dogs_classification_hmc_samples.csv")
+# In[26]:
 
 
-# In[23]:
+fit_df_B = pd.DataFrame()
+for chain, values in pruned_hmc_sample_chains_b.items():
+    param_df = pd.DataFrame(values)
+    param_df["chain"]= chain
+    fit_df_B= pd.concat([fit_df_B, param_df], axis=0)
+
+base.save_parameter_chain_dataframe(fit_df_B, "data/dogs_classification_hmc_samples_1B.csv")
+
+
+# Use following button to upload:
+# 
+# * `"data/dogs_classification_hmc_samples_1A.csv"` as `'fit_df_A'`
+# 
+# * `"data/dogs_classification_hmc_samples_1B.csv"` as `'fit_df_B'`
+
+# In[27]:
 
 
 # Use following to load data once the results from pyro sampling operation are saved offline
 load_button= base.build_upload_button()
 
 
-# In[24]:
+# In[28]:
 
 
-# Use following to load data once the results from pyro sampling operation are 
-# saved offline
+# Use following to load data once the results from pyro sampling operation are saved offline
+
 if load_button.value:
-    fit_df = base.load_parameter_chain_dataframe(load_button)
-fit_df.head(3)
+    fit_df_A = base.load_parameter_chain_dataframe(load_button)#Load "data/dogs_classification_hmc_samples_1A.csv"
+#     fit_df_B= base.load_parameter_chain_dataframe(load_button)#Load "data/dogs_classification_hmc_samples_1B.csv"
 
 
 # Following outputs the similar summary of required statistics such as `"mean", "std", "Q(0.25)", "Q(0.50)", "Q(0.75)"`, but in a slightly different format, given a list of statistic names
 
-# In[25]:
+# #### Summary for model chains with `HalfNormal` priors
+
+# In[29]:
 
 
 
-base.summary(fit_df, layout =2)
+base.summary(fit_df_A, layout =2)
+
+
+# #### Summary for model chains with `Uniform` priors
+
+# In[30]:
+
+
+
+base.summary(fit_df_B, layout =2)
 
 
 # Following plots sampled parameters values as Boxplots with `M parameters` side by side on x axis for each of the `N chains`
 
 # Pass the list of `M parameters` and list of `N chains`, with `plot_interactive` as `True or False` to choose between _Plotly_ or _Seaborn_
 
-# In[26]:
+# In[31]:
 
 
 parameters= ["alpha", "beta"]# All parameters for given model
-chains= fit_df["chain"].unique()# Number of chains sampled for given model
+chains= fit_df_A["chain"].unique()# Number of chains sampled for given model
 
 
-# In[27]:
+# #### Boxplot for model chains with `HalfNormal` priors
+
+# In[32]:
 
 
 # Use plot_interactive=False for Normal seaborn plots offline
 
-base.plot_parameters_for_n_chains(fit_df, chains=['chain_0', 'chain_1', 'chain_2', 'chain_3'], parameters=parameters, plot_interactive=True)
+base.plot_parameters_for_n_chains(fit_df_A, chains=['chain_0', 'chain_1', 'chain_2', 'chain_3'], parameters=parameters, plot_interactive=True)
 
 
-# Following plots the `joint distribution` of `pair of each parameter` sampled values for all chains
+# #### Boxplot for model chains with `Uniform` priors
 
-# In[28]:
-
-
-
-base.plot_joint_distribution(fit_df, parameters)
+# In[33]:
 
 
-# Following plots the `Pairplot distribution` of each parameter with every other parameter's sampled values
+# Use plot_interactive=False for Normal seaborn plots offline
 
-# In[29]:
+base.plot_parameters_for_n_chains(fit_df_B, chains=['chain_0', 'chain_1', 'chain_2', 'chain_3'], parameters=parameters, plot_interactive=True)
 
 
-sns.pairplot(data=fit_df, hue= "chain");
+# Following plots the `joint distribution` of `pair of each parameter` sampled values for all chains with `HalfNormal` priors.
+
+# In[34]:
+
+
+
+base.plot_joint_distribution(fit_df_A, parameters)
+
+
+# Following plots the `joint distribution` of `pair of each parameter` sampled values for all chains with `Uniform` priors.
+
+# In[35]:
+
+
+
+base.plot_joint_distribution(fit_df_B, parameters)
+
+
+# Following plots the `Pairplot distribution` of each parameter with every other parameter's sampled values for all chains with `HalfNormal` priors
+
+# In[36]:
+
+
+sns.pairplot(data=fit_df_A, hue= "chain");
+
+
+# Following plots the `Pairplot distribution` of each parameter with every other parameter's sampled values for all chains with `Uniform` priors
+
+# In[37]:
+
+
+sns.pairplot(data=fit_df_B, hue= "chain");
 
 
 # Based on all above summaries both visual and descriptive, `chain_2` seemed problematics, and it is very clear that $\alpha, \beta <0$ with almost certainly.
@@ -481,44 +644,32 @@ sns.pairplot(data=fit_df, hue= "chain");
 # 
 # Posterior Predictive Checking (PPE) helps examine the fit of a model to real data, as the parameter drawn for simulating conditions & regions of interests come from the posterior distribution. While PPE incorporates model uncertainly (by averaring over all possible models), we take a simpler route to begin with, which is to, sample the $\alpha, \beta$ pair that is very plausible in the posterior (eg. the poster means), and simulate data from under this particular generative model.
 
-# In[30]:
+# In[38]:
 
 
-posterior_parameters_pairs_c1= pruned_hmc_sample_chains.get('chain_0')
+# With priors & posteriros
+posterior_parameters_pairs_a = pruned_hmc_sample_chains_a.get('chain_0')
 
-posterior_parameters_pairs_c1 = list(zip(*list(posterior_parameters_pairs_c1.values())))
-print("total posterior samples count in chain:", len(posterior_parameters_pairs_c1), " sample example: ", posterior_parameters_pairs_c1[:2])
+posterior_parameters_pairs_b = pruned_hmc_sample_chains_b.get('chain_0')
 
-
-# In[31]:
-
-
-# simulated_data_given_pair_posterior= simulate_observations_given_param(num_dogs=30, num_trials=24, parameter_pair_list= posterior_parameters_pairs_c1)#, print_logs=1
-simulated_data_given_pair_posterior= base.simulate_observations_given_param(init_obs=0, num_dogs=30, num_trials=24, parameter_pair_list= posterior_parameters_pairs_c1)#, print_logs=1
-print("Number of datasets/posterior pairs generated: ", simulated_data_given_pair_posterior.shape[0])
+original_plus_simulated_data_posterior = base.simulate_observations_given_prior_posterior_pairs(dogs_data["Y"], 
+                                                                                                num_dogs=30, num_trials=24, activation_type= "exp",
+                                                                                                prior_simulations= original_plus_simulated_prior_data, 
+                                                                                                model_halfnormal_a= posterior_parameters_pairs_a,
+                                                                                                model_uniform_b= posterior_parameters_pairs_b)
 
 
-# In[32]:
+# Save & Export simulated data from `prior & posterior predictive checking` to _chapter 02_
+
+# In[47]:
 
 
-simulated_data_given_pair_posterior_flattened = np.reshape(simulated_data_given_pair_posterior, (-1, 25))
-
-arr1 = np.mean(dogs_data["Y"], axis=0)# Original
-arr2=np.mean(simulated_data_given_pair_flattened, axis=0)# Priors
-arr3=np.mean(simulated_data_given_pair_posterior_flattened, axis=0)# Posterior
-
-original_plus_simulated_data_plus_posterior= np.concatenate([arr1.reshape((1, -1)), arr2.reshape((1, -1)), arr3.reshape((1, -1))])
-
-print("respective shapes of original data: %s, data simulated from prior: %s, data simulated from posterior: %s and concatenated arrays: %s"%(arr1.shape, arr2.shape, arr3.shape, original_plus_simulated_data_plus_posterior.shape))
+original_plus_simulated_data_posterior_df= pd.DataFrame(original_plus_simulated_data_posterior.T, 
+                                                     columns=["Dog_%s"%(idx+1) for idx in range(len(original_plus_simulated_data_posterior))])
 
 
-# In[34]:
-
-
-
-base.plot_original_y(original_plus_simulated_data_plus_posterior, ylabel='Probability of avoidance at trial j [all original & simulated prior data]')
-
-print("\n\nHere 'Dog 1' corresponds to Original data, 'Dog 2' corresponds to data simulated from prior & 'Dog 3' corresponds to data simulated from posterior")
+base.save_parameter_chain_dataframe(original_plus_simulated_data_posterior_df, 
+                                    "data/dogs_original_plus_simulated_data_model_1ab.csv")
 
 
 # ### 7. Model Comparison
@@ -562,7 +713,7 @@ print("\n\nHere 'Dog 1' corresponds to Original data, 'Dog 2' corresponds to dat
 # Following method computes deviance value given parameters `alpha & beta`
 # <Br>
 
-# In[21]:
+# In[36]:
 
 
 #launch docstring for calculate_deviance_given_param
@@ -576,7 +727,7 @@ print("\n\nHere 'Dog 1' corresponds to Original data, 'Dog 2' corresponds to dat
 # 
 # <Br>
 
-# In[22]:
+# In[37]:
 
 
 #launch docstring for DIC
@@ -584,79 +735,44 @@ print("\n\nHere 'Dog 1' corresponds to Original data, 'Dog 2' corresponds to dat
 #launch docstring for compare_DICs_given_model
 
 
-# #### Define alternate model with different priors
+# Sample an alternate model with different priors
 # 
-# The following model is defined in the same manner using Pyro as per the following expression of generative model for this dataset, just with modification of prior distribution to `Uniform` rather than `Normal` as follows:
+# The alternate model is defined in the same manner using Pyro as per the following expression of generative model for this dataset, just with modification of prior distribution to `Uniform` rather than `Normal` as follows:
 # 
 # Instead of considering Normal priors of $\alpha$ and $\beta$, we consider uniform priors, i.e.,
-# $prior\ \alpha$ ~ $U(-30.79, 30.79)$,  $\beta$ ~ $U(-30.79, 30.79)$
-
-# In[35]:
-
-
-# # Dogs model with uniform prior
-#launch docstring for DogsModelUniformPrior
-
-DogsModelUniformPrior= base.DogsModelUniformPrior
-DogsModelUniformPrior
-
-
-# In[38]:
-
-
-
-hmc_sample_chains_uniform_prior, hmc_sample_chains_uniform_diagnostics= base.get_hmc_n_chains(DogsModelUniformPrior, x_avoidance, x_shocked, y, num_chains=4, sample_count= 900)
-
+# $prior\ \alpha$ ~ $U(0, 10.)$,  $\beta$ ~ $U(0, 10.)$
+# 
+# In _Section 5._, we already sampled such model to obtain posterior chains as `pruned_hmc_sample_chains_b` which we shall use for computing DIC in cells that follow.
 
 # #### Sample chains mixing for Uniform priors
 # Following plots chains of samples for alpha & beta parameters with uniform priors
 
-# In[39]:
-
-
-beta_chain_matrix_uniform_df = pd.DataFrame(hmc_sample_chains_uniform_prior)
-
-base.plot_chains(beta_chain_matrix_uniform_df)
-
-
-# #### Auto-correlation plots for sample chains with Uniform priors
-
-# In[40]:
+# In[60]:
 
 
 
-base.autocorrelation_plots(beta_chain_matrix_uniform_df)
-
-
-# In[41]:
-
-
-thining_dict_uniform = {"chain_0": {"alpha":7, "beta":7}, "chain_1": {"alpha":7, "beta":7}, 
-                "chain_2": {"alpha":7, "beta":7}, "chain_3": {"alpha":7, "beta":7}}
-
-
-pruned_hmc_sample_chains_uniform_prior = base.prune_hmc_samples(hmc_sample_chains_uniform_prior, thining_dict_uniform)
+base.plot_chains(pd.DataFrame(pruned_hmc_sample_chains_b))
 
 
 # #### Gelman-Rubin statistic for Uniform priors
 
-# In[42]:
+# In[49]:
 
 
 
-grubin_values_uniform = base.gelman_rubin_stats(pruned_hmc_sample_chains_uniform_prior)
+grubin_values_uniform = base.gelman_rubin_stats(pruned_hmc_sample_chains_b)
 
 
 # #### compute & compare `deviance information criterion` for a multiple bayesian models
 
-# In[43]:
+# In[50]:
 
 
 
-base.compare_DICs_given_model(x_avoidance, x_shocked, y, Dogs_normal_prior= pruned_hmc_sample_chains, Dogs_uniform_prior= pruned_hmc_sample_chains_uniform_prior)
+base.compare_DICs_given_model(x_avoidance, x_shocked, y, Dogs_HalfNormal_prior= pruned_hmc_sample_chains_a, Dogs_uniform_prior= pruned_hmc_sample_chains_b)
 
 
-# The DIC values are very close, so we don't anticipate substantially different fits. This is largely because, both priors are flat. However, if were to follow the rule book, we had to pick a model with the smallest DIC. In that case, we have to pick `Normal` Priors over `Uniform` Priors.
+# The DIC values are very close, so we don't anticipate substantially different fits. This is largely because, both priors are flat. However, if were to follow the rule book, we had to pick a model with the smallest DIC. In this case, both `Normal` Priors & `Uniform` Priors yield identical DIC.
 
 # ### 8. Inference & Analysis
 # 
@@ -665,17 +781,17 @@ base.compare_DICs_given_model(x_avoidance, x_shocked, y, Dogs_normal_prior= prun
 # 
 # We choose model with Normal Prior, and pick samples from one particular chain of HMC samples say `chain_3`
 
-# In[44]:
+# In[53]:
 
 
-for chain, samples in pruned_hmc_sample_chains.items():
+for chain, samples in pruned_hmc_sample_chains_a.items():
     samples= dict(map(lambda param: (param, torch.tensor(samples.get(param))), samples.keys()))# np array to tensors
     print(chain, "Sample count: ", len(samples["alpha"]))
 
 
 # Plot density for parameters from `chain_3` to visualise the spread of sample values from that chain
 
-# In[45]:
+# In[54]:
 
 
 title= "parameter distribution for : %s"%(chain)
@@ -686,24 +802,24 @@ fig.show()
 print("Alpha Q(0.5) :%s | Beta Q(0.5) :%s"%(torch.quantile(samples["alpha"], 0.5), torch.quantile(samples["beta"], 0.5)))
 
 
-# Plot density & contours for both parameters from `chain_3` to visualise the joint distribution & region of interest
+# Plot density & contours for both parameters from `chain_3` to visualise the joint distribution & region of interest with `HalfNormal` priors.
 
-# In[46]:
+# In[55]:
 
 
 #Choosing samples from chain 3
-chain_samples_df= fit_df[fit_df["chain"]==chain].copy()# chain is 'chain_3' 
+chain_samples_df_A= fit_df_A[fit_df_A["chain"]==chain].copy()# chain is 'chain_3' 
 
-alpha= chain_samples_df["alpha"].tolist()
-beta= chain_samples_df["beta"].tolist()
+alpha= chain_samples_df_A["alpha"].tolist()
+beta= chain_samples_df_A["beta"].tolist()
 colorscale = ['#7A4579', '#D56073', 'rgb(236,158,105)', (1, 1, 0.2), (0.98,0.98,0.98)]
-fig = ff.create_2d_density(alpha, beta, colorscale=colorscale, hist_color='rgb(255, 255, 150)', point_size=4, title= "alpha beta joint density plot")
+fig = ff.create_2d_density(alpha, beta, colorscale=colorscale, hist_color='rgb(255, 255, 150)', point_size=4, title= "Alpha-Beta joint density plot for model with 'HalfNormal' prior")
 fig.update_layout( xaxis_title="x (alpha)", yaxis_title="y (beta)")
 
 fig.show()
 
 
-# **Note:** The distribution of alpha values are significantly offset to the left from beta values, by almost 13 times; Thus for any given input observation of avoidances or shocks, the likelihood of getting shocked is more influenced by small measure of avoidance than by getting shocked.
+# **Note:** The distribution of alpha values are significantly offset to the left from beta values, by almost 26 times; Thus for any given input observation of avoidances or shocks, the likelihood of getting shocked is more influenced by small measure of avoidance than by getting shocked.
 
 # #### Observations:
 # 
@@ -712,15 +828,15 @@ fig.show()
 # 
 # However, it is not the case with $\alpha, \alpha$ is more negative & farthest from 'zero'. It imparts a significant decline in non-avoidance (𝜋𝑗) even for few instances where dog avoids the shock; therefore $\alpha$ can be interpreted as _retention ability_ i.e., the ability to retain the learning from previous shock experiences.
 
-# In[47]:
+# In[56]:
 
 
-print(chain_samples_df["alpha"].describe(),"\n\n", chain_samples_df["beta"].describe())
+print(chain_samples_df_A["alpha"].describe(),"\n\n", chain_samples_df_A["beta"].describe())
 
 
 # From the contour plot above following region in posterior distribution seems highly plausible for parameters:
-# 1. For alpha, `-0.2 < alpha < -0.19`
-# 2. For beta `-0.0075 < beta < -0.0055`
+# 1. For alpha, `0.18 < alpha < -0.20`
+# 2. For beta `0.005 < beta < 0.008`
 
 # Let us look at $\frac{\alpha}{\beta}$ as a proxy to see which of the two (_learning ability_ and _retention_ability) are domimant. 
 # 
@@ -729,18 +845,18 @@ print(chain_samples_df["alpha"].describe(),"\n\n", chain_samples_df["beta"].desc
 # The latter quantity can be estimate by the Monte Carlo average as follows:
 # $P(\frac{\alpha}{\beta}>1) = \frac{1}{n}\sum_{t=1}^{n} I(\alpha < \beta)$, i.e, the fraction of times $\alpha < \beta$.
 
-# In[48]:
+# In[59]:
 
 
-x1 = chain_samples_df["alpha"].to_numpy()
-x2 = chain_samples_df["beta"].to_numpy()
+x1 = chain_samples_df_A["alpha"].to_numpy()
+x2 = chain_samples_df_A["beta"].to_numpy()
 p = np.mean(x1<x2)
 print(p)
 
 
 # So, the posterior evident for _retention ability_ outweigting _learning abilty_ is overwhelming.  
 
-# ### 9. Discussions
+# ### 9. Commentary
 # .
 # 
 # TBD.
