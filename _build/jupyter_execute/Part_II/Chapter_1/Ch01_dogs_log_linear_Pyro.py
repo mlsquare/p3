@@ -309,11 +309,16 @@ hmc_sample_chains_b, hmc_chain_diagnostics_b = base.get_hmc_n_chains(DogsModel, 
 
 # ### 5. Diagnosing the computational approximation
 # 
-# Just like any numerical technique, no matter how good the theory is or how robust the implementation is, it is always a good idea to check if indeed the samples drawn are reasonable. In the ideal situation, we expect the samples drawm by the sampler to be independant, and identically distributed (i.i.d) as the posterior distribution. In practice, this is far from true as MCMC itself is an approxmate technique and a lot can go wrong. In particular, chains may not have converged or samples are very correlated.
+# Just like any numerical technique, no matter how good the theory is or how robust the implementation is, it is always a good idea to check if indeed the samples drawn are reasonable. In the ideal situation, we expect the samples drawm by the sampler to be independant, and identically distributed (i.i.d) as the posterior distribution. In practice, this is far from true as MCMC itself is an approxmate technique and a lot can go wrong. In particular, chains may not have converged or samples are very correlated. We can divide diagnosis into three sections.
+# 
+# - __Burn-in__: What is the effect of inititialization? By visually inspecting the chains, we can notice the transiant behaviour. We can drop the first "n" number of sampels from the chain.
+# 
+# - __Thinning__: What is the intra-chain correlation? We can use ACF (Auto-correlation function) to inspect correlation. A rule of thumb is, thin the chains such that, the ACF drops to 1/10. Here, ACF is drops to less than 0.1 at lag 5, then we retain only every 5th in the chain.
+# 
+# - __Mixing__: Visually, all the chains, when plotted, should be indistinguishable from each other. At a very broad level, the means of the chains should be close, and variances shall be close. These are the two central moments track and turn to Gelman-Rubin statistic to assess. Other summmary statistics can be tracked, of course. 
 # 
 # We can use both visual and more formal statistical techniques to inspect the quality of the fit (not the model fit to the data, but how well the appximation is, having accepted the model class for the data at hand) by  treating chains as time-series data, and that we can run several chains in parallel. We precisely do that next. 
-# <br>
-# <br>
+# 
 # Following snippet allows plotting **Parameter vs. Chain matrix** and optionally saving the dataframe.
 
 # In[10]:
@@ -644,9 +649,12 @@ sns.pairplot(data=fit_df_B, hue= "chain");
 # In particular, just like the Prior Predictive Check, we are intereted in the posterior expected value of a Dog getting shocked. This quantity can be estimated by the Monte Carlo average:
 # 
 # <br>
-# $E_{P(\alpha,\beta|y)}(\hat{y_j}) = E_{P(\alpha,\beta|y_j)}(\exp(-(\alpha X_{a} + \beta X_{s}))))) \approx  \frac{1}{B}\sum_{t=1}^{T}\exp(-(\alpha_t X_{a} + \beta_t X_{s})))))$
-# <br>
+# $E_{P(\alpha ,\beta |y)}(\hat{y_j})$
 # 
+# $\,\,\,\, = E_{P(\alpha,\beta|y_j)}(\exp(-(\alpha X_{a} + \beta X_{s})))))$
+# 
+# $\,\,\,\, \approx   \frac{1}{B}\sum_{t=1}^{T}\exp(-(\alpha_t X_{a} + \beta_t X_{s})))))$
+# <br>
 # where $\alpha_t, \beta_t$ are the t-th posterior sample in the MCMC chain.
 
 # In[38]:
