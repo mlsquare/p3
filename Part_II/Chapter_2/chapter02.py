@@ -243,13 +243,14 @@ class base(object):
 
     @staticmethod
     def simulate_observations_given_param(init_obs=None, num_dogs=1, num_trials=30, 
-                                      parameter_pair_list= [(-2.490809, -1.642264)], activation = "exp", print_logs=0, print_exceptions=0):
+                                        parameter_pair_list= [(-2.490809, -1.642264)], 
+                                        activation = "exp", print_logs=0, print_exceptions=0):
         """
         Input
         -------
 
 
-        
+
         Output
         --------
         """
@@ -291,25 +292,27 @@ class base(object):
 
 
                     simulated_y.append(Y_list)
-                simulated_data_given_pair.append(simulated_y)
+                simulated_data_given_pair.append(simulated_y)# Contains 'avoidances' as obs/success
             except Exception as error:
                 if print_exceptions:
                     print("Issue '%s' with parameter pair: %s"%(error, [alpha, beta]))
 
-        simulated_data_given_pair= np.array(simulated_data_given_pair)
+        simulated_data_given_pair= 1- np.array(simulated_data_given_pair)# Contains 'shocked' as obs/success
         total_time= time.time()- t1
         print("Total execution time: %s\n"%total_time)
 
         return simulated_data_given_pair
 
     @staticmethod
-    def simulate_observations_given_prior_posterior_pairs(original_data, init_obs=None, num_dogs=30, num_trials=24, activation_type= "exp", prior_simulations= None, **kwargs):
+    def simulate_observations_given_prior_posterior_pairs(original_data, init_obs=None, num_dogs=30, 
+                                                        num_trials=24, activation_type= "exp", 
+                                                        prior_simulations= None, **kwargs):
         """
         Input
         -------
 
 
-        
+
         Output
         --------
         """
@@ -326,16 +329,16 @@ class base(object):
                                                                         parameter_pair_list= parameters_pairs, activation=activation_type)#, print_logs=1
 
             print("Number of datasets/%s pairs generated: %s"%(flag, simulated_data_given_pair.shape[0]))
-            
+
             simulated_data_given_pair_flattened = np.reshape(simulated_data_given_pair, (-1, 25))
-            
+
             simulated_arr=np.mean(simulated_data_given_pair_flattened, axis=0)
             print("Shape of data simulated from %s for model '%s' : %s"%(flag, model_name, simulated_arr.shape))
             simulated_arr_list.append(simulated_arr.reshape((1, -1)))
             note_text+="'Dog_%s' corresponds to observations simulated from %s of '%s', "%(idx+1, flag, model_name)
-        
+
         l_idx = idx+1#last index
-        original_data_arr = np.mean(original_data, axis=0)# Append original dogs data
+        original_data_arr = 1- np.mean(original_data, axis=0)# Contains 'shocked' as obs/success
 
         if prior_simulations is not None:
             original_plus_simulated_data= np.concatenate(simulated_arr_list)
@@ -344,18 +347,18 @@ class base(object):
             for idx, content in enumerate(kwargs.items()):
                 model_name, _ = content
                 note_text+="'Dog_%s' corresponds to observations simulated from prior of '%s', "%(l_idx+idx+1, model_name)
-            ylabel_text= 'Probability of avoidance at trial j [original & simulated priors, posteriros]'
+            ylabel_text= 'Probability of shock at trial j [original & simulated priors, posteriros]'
             l_idx+=idx+1
         else:
             simulated_arr_list.append(original_data_arr.reshape((1, -1)))
             original_plus_simulated_data= np.concatenate(simulated_arr_list)
-            ylabel_text= 'Probability of avoidance at trial j [original & simulated priors]'
+            ylabel_text= 'Probability of shock at trial j [original & simulated priors]'
         print("Respective shape of original data: %s and concatenated arrays of data simulated for different priors/posteriors: %s"%(original_data_arr.shape, original_plus_simulated_data.shape))
 
         note_text = note_text[:-2]
         note_text+=" & 'Dog_%s' corresponds to 'Original data'."%(l_idx+1)
         print("\n%s\n%s\n%s"%("_"*55, "_"*70, note_text))
-        
+
         base.plot_original_y(original_plus_simulated_data, ylabel=ylabel_text)
 
         return original_plus_simulated_data
