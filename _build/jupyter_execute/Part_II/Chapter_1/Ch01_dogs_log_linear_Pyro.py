@@ -190,9 +190,7 @@ base.plot_original_y(x_shocked.numpy(), ylabel='Cumulative Shocked Trials')
 # <br>
 # $\beta \sim N(0., 316.)I(\beta <0)$
 # 
-# But it is easier to constrain r.vs on the posive real line. So, we simply absorb the negative sign inside the model.  Finally, we have these models, with Half-normal and Uniform priors s.t $\alpha, \beta > 0$
-# 
-# We experiment with the variants of the above models as follows:
+# But it is easier to constrain r.vs on the posive real line. So, we simply absorb the negative sign inside the model.  Finally, we have these models, with Half-normal and Uniform priors s.t $\alpha, \beta > 0$. They are:
 # 
 # __Model A.__
 # <br>
@@ -265,10 +263,7 @@ original_plus_simulated_prior_data = base.simulate_observations_given_prior_post
                                                                                             model_uniform_b= prior_samples_b)
 
 
-# Even though the mean and median can differ from run to run, looking at the densities, the variance is vary large -- so the sample mean would also have huge variance. The take-away is that, both $\alpha, \beta$ are given very weak priors. We more or less rely on the data (evidence) to drive their estimation.
-# 
-# 
-# TBD: Prior Sensitivity Analysis
+# We notice something very strange. We thought the priors on $\alpha, \beta$ are flat, which is true. But they are not non-informative. In fact, they are extremely informative for $\pi_{ij}$, since  _a priori_, it has a right skwed distribution, with mode at 0. As a result, _a priori_, we think that, Dogs getting shocked is very low. 
 
 # ### 4. Posterior Estimation
 # 
@@ -467,9 +462,6 @@ base.get_chain_diagnostics(hmc_chain_diagnostics_a)
 base.get_chain_diagnostics(hmc_chain_diagnostics_b)
 
 
-# Based on simple multiple line plots, we can see that, in this run, `chain_3` is behaving differently than the remaining chains. It may be due to really a different initialization. Otherwise, all chains seem to mix well. Therefore, we drop `chain_3` from analysis. However, we need to be cautious about dropping, and we should check what is its effect on the actual predictions -- since sometimes, even though parameters can look very different numerically, they may have very little effect on the likelihood. Neverthless, it implies that either something is not right about the chain or the model is operating at the edge.
-# 
-# 
 # #### Descriptive summaries
 # 
 # Following outputs the summary of required statistics such as `"mean", "std", "Q(0.25)", "Q(0.50)", "Q(0.75)"`, select names of statistic metric from given list to view values
@@ -636,13 +628,26 @@ sns.pairplot(data=fit_df_A, hue= "chain");
 sns.pairplot(data=fit_df_B, hue= "chain");
 
 
-# Based on all above summaries both visual and descriptive, `chain_2` seemed problematics, and it is very clear that $\alpha, \beta <0$ with almost certainly.
+# Nothing unsual seems to be happennning. 
 # 
-# TBD: Converence Statsitics like Gelman-Rubin has to be implemented.
+# - All chains are mixing well (G-R statstics is close to 1). 
+# - ACF of the chains decays rapidly. 
+# - Both Half-normal and Uniform are giving similar results
+# - Joint distribution of $\alpha, \beta$ has no strong correlation, and consistent across chains.
+# 
+# But, let us do Posterior Predictive checks
 
 # ### 6. Sensitivity Analysis
 # 
 # Posterior Predictive Checking (PPE) helps examine the fit of a model to real data, as the parameter drawn for simulating conditions & regions of interests come from the posterior distribution. While PPE incorporates model uncertainly (by averaring over all possible models), we take a simpler route to begin with, which is to, sample the $\alpha, \beta$ pair that is very plausible in the posterior (eg. the poster means), and simulate data from under this particular generative model.
+# 
+# In particular, just like the Prior Predictive Check, we are intereted in the posterior expected value of a Dog getting shocked. This quantity can be estimated by the Monte Carlo average:
+# 
+# <br>
+# $E_{P(\alpha,\beta|y)}(\hat{y_j}) = E_{P(\alpha,\beta|y_j)}(\exp(-(\alpha X_{a} + \beta X_{s}))))) \approx  \frac{1}{B}\sum_{t=1}^{T}\exp(-(\alpha_t X_{a} + \beta_t X_{s})))))$
+# <br>
+# 
+# where $\alpha_t, \beta_t$ are the t-th posterior sample in the MCMC chain.
 
 # In[38]:
 
@@ -658,8 +663,6 @@ original_plus_simulated_data_posterior = base.simulate_observations_given_prior_
                                                                                                 model_halfnormal_a= posterior_parameters_pairs_a,
                                                                                                 model_uniform_b= posterior_parameters_pairs_b)
 
-
-# Save & Export simulated data from `prior & posterior predictive checking` to _chapter 02_
 
 # In[47]:
 
