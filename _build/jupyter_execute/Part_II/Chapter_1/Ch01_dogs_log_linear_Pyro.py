@@ -949,7 +949,7 @@ print(p)
 
 # ### 9. Commentary
 # 
-# 1. Analyzing this dataset was turned out be more complicated than we originally thought. Very little is known about the data or prior analysis technique. Both WinBUGs and Stan, fell short of providing any reasonable analysis, except providing a code in model. This is hardly useful for a practitioner
+# 1. Analyzing this dataset was turned out be more complicated than we originally thought. Very little is known about the data or prior analysis techniques. The historical orgins of WinBUGs reference, Stan, are not known. The orignal 1953 does not talk about this modeling at all. 
 # 
 # 2. `pyro`s documentation is very poort. The parametrizations of the distribution has to be made very clear. There is no standard convention for defining the parameters of a distribution. For example, winBUGs, MATLAB, and Wikipedia can all define some distributions differnetly. If not checked carefull, one could be using variance in place of precision.
 
@@ -958,6 +958,10 @@ print(p)
 # 1. Derive the expected value of Dogs getting shocked under the prior.
 # 2. Derive the expected value of Dogs getting shocked under the posterior.
 # 3. Verify the asymptotic analysis of the prior and posterior predicted responses provided.
-# 3. Use `sigmoid` link function, instead of `exp`, and complete the model specification, and carry out the inference?
-# 4. Instead of modeling the entire trails, consider the data at the last trais. Develop a model to analyze this aggregate data.
-# 5. Devevelop and implement an experiment to validate or invalidate the hypothesis that, under complete data, predicted poster responses at an intermediate trial need to not be sandwitched between data and prior.
+# 4. Use `sigmoid` link function, instead of `exp`, and complete the model specification, and carry out the inference?
+# 5. Instead of modeling the entire trails, consider the data at the last trais. Develop a model to analyze this aggregate data.
+# 6. Devevelop and implement an experiment to validate or invalidate the hypothesis that, under complete data, predicted poster responses at an intermediate trial need to not be sandwitched between data and prior.
+# 7. Develop a model where each Dog is allowed have its own learnign and retention parameters.
+# 8. Develop a model with conjugate priors.
+# 9. Current models in someways are performing auto-regression -- the trails are indeed repeated measures. Can this data be analyzed as time-series? If yes, eloberate the techniques.
+# 10. In the model construction, argue that covariates are negatively correlated (learning rate and retention rate). Usually, this is not a good design. What are the alternatives?
