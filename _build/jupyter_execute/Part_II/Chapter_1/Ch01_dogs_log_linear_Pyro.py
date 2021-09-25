@@ -965,3 +965,4 @@ print(p)
 # 8. Develop a model with conjugate priors.
 # 9. Current models in someways are performing auto-regression -- the trails are indeed repeated measures. Can this data be analyzed as time-series? If yes, eloberate the techniques.
 # 10. In the model construction, argue that covariates are negatively correlated (learning rate and retention rate). Usually, this is not a good design. What are the alternatives?
+# 11. Reproduce the results in [Stan](https://mc-stan.org/), [Edward](http://edwardlib.org/), [PymC](https://docs.pymc.io/), [BUGS](https://www.rdocumentation.org/packages/R2WinBUGS/versions/2.1-21/topics/bugs) 
