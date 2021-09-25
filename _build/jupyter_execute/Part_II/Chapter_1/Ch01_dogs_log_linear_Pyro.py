@@ -121,11 +121,14 @@ base.plot_original_y(x_shocked.numpy(), ylabel='Cumulative Shocked Trials')
 # Here, $y_{ij}=1$ if the a dog fails to avoid a shock at the j-th trial, and is 0 if it avoids. 
 # 
 # The above expression is used as a generalised linear model with log-link function in WinBugs implementation
-# <br>
+# 
+# 
 # #### BUGS model
-# <br>
-# $\log\pi_j = \alpha\ x_j + \beta\ ( $j$-x_j )$
-#    
+# 
+# In WinBUGs, the model is:
+# 
+# $\log(\pi_{j})   =   \alpha x_{j} + \beta({j-x_{j}})$
+# 
 # Here
 #    - $\log\pi_j$ is log probability of a dog getting shocked at trial $j$
 #    - $x_j$ is number of successful avoidances of shock prior to trial $j$.
@@ -156,9 +159,10 @@ base.plot_original_y(x_shocked.numpy(), ylabel='Cumulative Shocked Trials')
 # ```
 # 
 # ____________________
-# The same model when implemented in PyStan
 #   
 # #### Equivalent Stan model
+# 
+# The same model when implemented in PyStan
 # 
 # ```
 # {
@@ -271,13 +275,13 @@ original_plus_simulated_prior_data = base.simulate_observations_given_prior_post
 # 
 # Then, $\pi = \exp(-\alpha)$ with $\alpha \sim U(0,b)$. We can calculate the _prior expected value_ analtucally, as follows:
 # 
-# $$E_{pr}(\hat{y}) = \frac{1}{b}\int_{0}^{b} \exp(-\alpha) = (1-\exp(-b))/b$$
+# $$E_{pr}[\hat{y}] = \frac{1}{b}\int_{0}^{b} \exp(-\alpha) = (1-\exp(-b))/b$$
 # 
-# with $\lim_{b \to 0} E_{pr}(\hat{y}) = 1 $, implying that, for supposdely a non-informative prior, we have strong prior belief that, Dogs will avoid shocks, with certainity. 
+# with $\lim_{b \to 0} E_{pr}[\hat{y}] = 1 $ and $\lim_{b \to \infty} E_{pr}[\hat{y}] = 0 $ implying that, for supposdely a non-informative prior, we have strong prior belief that, Dogs will avoid shocks, with certainity. 
 # 
-# Let us generalize the setting further. Suppose, we are at, we at the n-th trail. Let $x_a, x_s$ be the avoidances and shocks upto this trail. Then,
+# Let us generalize the setting further. Suppose, we are at the n-th trail. Let $x_a, x_s$ be the avoidances and shocks upto this trail. Then,
 # 
-# $$E_{pr}(\hat{y}) = \frac{1}{b^2}\int_{0}^{b} \exp(-\alpha x_a) \int_{0}^{b} \exp(-\beta x_s) = \frac{1}{b^2 x_a x_s}(1-\exp(-bx_a))(1-\exp(-bx_s))$$
+# $$E_{pr}[\hat{y}] = \frac{1}{b^2}\int_{0}^{b} \exp(-\alpha x_a) \int_{0}^{b} \exp(-\beta x_s) = \frac{1}{b^2 x_a x_s}(1-\exp(-bx_a))(1-\exp(-bx_s))$$
 # 
 # Notice that, as the number of trails $n = x_a+x_s+1$ increases, the expected values decreases to 0 at rate $O(1/b^2n)$. Thefore, eventually, Dogs learn to avoid, with certainty, is the _a priori_ behaviour.
 
@@ -664,10 +668,11 @@ sns.pairplot(data=fit_df_B, hue= "chain");
 # 
 # In particular, just like the Prior Predictive Check, we are intereted in the posterior expected value of a Dog getting shocked. This quantity can be estimated by the Monte Carlo average:
 # 
-# <br>
-# $ E_{P(\alpha ,\beta |y)}(\hat{y_j}) $
 # 
-# $\,\,\,\, = E_{P(\alpha,\beta|y_j)}(\exp(-(\alpha X_{a} + \beta X_{s})))))$
+# $ E_{P(\alpha,\beta|y_j)}[\hat{y}] $
+# 
+# 
+# $\,\,\,\, = E_{P(\alpha,\beta|y_j)}[\exp(-(\alpha X_{a} + \beta X_{s}))))]$
 # 
 # $\,\,\,\, \approx   \frac{1}{B}\sum_{t=1}^{T}\exp(-(\alpha_t X_{a} + \beta_t X_{s})))))$
 # <br>
@@ -701,34 +706,66 @@ base.save_parameter_chain_dataframe(original_plus_simulated_data_posterior_df,
 
 # Something weird happenning. The posterior expected value of a Dog getting shocked is larger than the prior and also the observed data.
 # 
-# We expect the posterior expected value to lie between data and prior, some sort of a weighed average of prior and data. Why is this happenning? Let us investiage.
+# We anticipate that the posterior expected value to lie between data and prior, some sort of a weighed average of prior and data. Why is this happenning? Let us investiage.
 # 
-# Can we compute the posterior, and prior expectations analytically to prove the point. Since sampling distribution and prior for $\alpha, \beta$ are not conjugate, we can not analytically compute it. At least, it is not trivial. But we will simply the situation, just to gain insights into the problem.
+# Can we compute the posterior, and prior expectations analytically to prove the point? Since sampling distribution and prior for $\alpha, \beta$ are not conjugate, in general, we can not analytically compute it. At least, it is not trivial. But we will simply the situation, just to gain insights into the problem.
 # 
 # Say, we observed $X_a=1, X_s=0, y=1$, and also consider uniform priors $U(0,b), b>0$ for both $\alpha,\beta$.
 # 
-# Then, $\pi = \exp(-\alpha)$ with $\alpha \sim U(0,b)$. We can calculate the _prior expected value_ analtucally, as follows:
-# 
-# $E_{pr}(\hat{y}) = \frac{1}{b}\int_{0}^{b} \exp(-\alpha) = (1-\exp(-b))/b$
+# Then, $\pi = \exp(-\alpha)$ with $\alpha \sim U(0,b)$. Earlier, we calculated the _prior expected value_ analtucally as $E_{pr}[\hat{y}] = (1-\exp(-b))/b$
 # 
 # Likewise, _prior expected value_ can be caluclated, at the second trial. But before that, we need to calculate the posterior distribution. Assume that, we observed $y=1$. Then,
 # 
-# 
 # $P(\alpha,\beta | y=1, X_a=1, X_s=0) \propto \exp(-\alpha) I(0,b)$
-# 
 # $\implies$
-# 
 # $E_{po}(\hat{y} | y=1, X_a=1, X_s=0)= \frac{1}{1-\exp(-b)}\int_0^{b} \exp(-2\alpha) = \frac{0.5(1-\exp(-2b))}{1-\exp(-b)}$
 # 
+# Since we know $y=1$, hypothesis is $ \frac{0.5(1-\exp(-2b))}{1-\exp(-b)} \le 1-\exp(-b)$. Let us verify if this inquality is true. At least for $b >> 1$ large, say $b=10, \exp(-b) \approx 0$. Therefore, for flat prior, $ 0.5 \le 1$, which is true. We will not prove but, we anticipate the same behaviour being true for any observed data. Let us verify the asymptotic behaviour a little bit.
 # 
-# Since we know $y=1$, hypothesis is $ \frac{0.5(1-\exp(-2b))}{1-\exp(-b)} \le 1-\exp(-b)$. Let us verify if this inquality is true. At least for $b >> 1$ large, say $b=10, \exp(-b) \approx 0$. Therefore, for flat prior, $ 0.5 \le 1$, which is true. We will not prove but, we anticipate the same behaviour being true for any observed data.
+# Consider that, we have data about all dogs upto time $t$, and there are $n$ Dogs. The likelihood is:
+# 
+# $L(y | \alpha,\beta) = \prod_{i=1}^{n} \pi^{y_i} (1-\pi_i)^{1-y_i} $, with $\pi_i = \exp(-(x_{i,a}^t \alpha + x_{i,s}^t \beta)$, $x_{i,s}(t), x_{i,a}(t)$ are cumulative avoidances and shocks of the i-th dog, upto time $t$.  We divide the responses into two sets: Dogs that are shocked and that are not in to $S$ and $S^c$ respectively.
+# 
+# Then likelihood simplifies to:
+# 
+# $$L(y | \alpha,\beta) = \prod_{i\in S^c} \pi_i \prod_{i\in S} (1-\pi_i) $$
+# 
+# It can be further simplified by absorbing few more summary statistics into it as:
+# 
+# $$L(y | \alpha,\beta) = \exp(-(\alpha N_{a} + \beta N_s)) (1-\exp(-(\alpha M_{a} + \beta M_s))) $$
+# 
+# where $N_a = \sum_{j=1, i \in S^c}^{t} x_{i,a}(j) $. Others can be defined similarly.
+# 
+# Now the posterior at time t, can be defined as follows:
+# $$P(\alpha, \beta | data) \propto \frac{1}{b^2} L(y | \alpha,\beta) I(\alpha,\beta > 0) $$
+# which turns out to be, after some algebra,
+# $$P(\alpha, \beta | data) = \frac{1}{Z} \exp(-(\alpha N_a + \beta N_s)) (1-\exp(-(\alpha M_a + \beta M_s))) I(\alpha,\beta > 0) $$
+# where the normalization constant  $Z$ is  $$\frac{1}{(1-\exp(-bN_a))(1-\exp(-bN_s))} - \frac{1}{(1-\exp(-b(N_a+M_a))(1-\exp(-b(N_s+M_s))}$$
+# 
+# The expected response under the above posterior is:
+# $$E_{P(\alpha, \beta | data)}[\hat{y}] = E[\exp(-(\alpha x_a + \beta x_s))] $$ for some given $x_a, x_s$. 
+# After some algebra, we get
+# 
+# $$E_{P(\alpha, \beta | data)}[\hat{y}] = \frac{(1-e^{-b(N_a+N_s+x_a+x_s})(1-e^{-b(N_a+N_s+M_a+M_s+x_a+x_s})}{Z(N_s+x_a)(N_s+x_s)(x_a+N_a+M_a)(x_s+N_s+M_s)}. $$
+# 
+# Even when the data shows strong tendency for Dogs to not learn from shocks, i.e, $|S| >> |S^c|$. Asymptotically,  $\lim_{N_s \to \infty} E_{P(\alpha, \beta | data)}[\hat{y}] = 0$. We suspect that, the rate is much slower than the prior. Consequently, the poster expected value will sit above the prior but above the empirical average, at the last instance.
+# 
 # 
 # Now we detected a problem. What could be happenning? Few plausible explanations:
 # 
-# - Recall that, the prior was very informative (very strong prior on Dogs gets shocked) but data is far from it. There is a misfit between the data and prior. 
-# - Upon inspection, realized that the `pyro` sampler draws samples around 0. Which in this case means, that,  
+# - Recall that the prior was very informative (very strong prior on Dogs gets shocked) but data is far from it. There is a misfit between the data and prior. 
+# - Even the posterior, it appears, is strongly influenced by the characterization.
+# - Upon inspection, realized that the `pyro` sampler draws samples around 0. Which in this case means, that the initilization is very far from the prior and the posterior. Consequently, the posterior landscape could be very rugged, NUTS has to try very hard to get of this sampling zone
+# - Notice that the prior and posterior asymptotic analysis was carried out the last observation. But, the joint likelihood is defined over the entire trails horizon. As a result, while posterior expectation at an intermediate trials has already seen the future data (more like smoothening). Consequently, it may be possible that, the posterior and prior wont agree becuase of the data-leakage.
+# 
+# There are two take-ways from this analysis. 
+# 
+# - We need to set priots such that the intitializations, as preferred by `pyro`, are around zero. The priors need to be caliberated in the model such that, the most plausible values or the central region should be around zero region. We will offset the prior into a more negative region, and consider its effect on the sampler.
+# - The sampling distribution, in paritcular, the `log` link function, seems to be a poor choice. Instead, we could use a `sigmoid` link function. We will analyze the same data, with a `sigmoid` link function in the chapter 02.
 
 # ### 7. Model Comparison
+# 
+# Ideally, we would not have proceeded with model comparison, as we originally envisioned, due to poor fit between model and data. However, for pedagogic reasons, and comppleness sake, we will do model comparison.
 # 
 # More often than not, there may be many plausible models that can explain the data. Sometime, the modeling choice is based on _domain knowledge_. Sometime it is out of comptational conveninece. Latter is the case with the choice of priors. One way to consider different models is by eliciting different prior distributions. 
 # 
@@ -832,10 +869,10 @@ base.compare_DICs_given_model(x_avoidance, x_shocked, y, Dogs_HalfNormal_prior= 
 
 # ### 8. Inference & Analysis
 # 
-# Alright, we have a model, and we are reasonable sure about the fit (both numerical and conceptual), but so what? The purpose of model building is to use these models as probing devices. That is, using the models can we answer some questions about the reality that these models have abstracted. 
+# Alright, we have a model, but so what? The purpose of model building is to use these models as probing devices. That is, using the models can we answer some questions about the reality that these models have abstracted. 
 # 
 # 
-# We choose model with Normal Prior, and pick samples from one particular chain of HMC samples say `chain_3`
+# We choose model with Half-Normal Prior, and pick samples from one particular chain of HMC samples say `chain_3`
 
 # In[53]:
 
@@ -875,14 +912,12 @@ fig.update_layout( xaxis_title="x (alpha)", yaxis_title="y (beta)")
 fig.show()
 
 
-# **Note:** The distribution of alpha values are significantly offset to the left from beta values, by almost 26 times; Thus for any given input observation of avoidances or shocks, the likelihood of getting shocked is more influenced by small measure of avoidance than by getting shocked.
-
 # #### Observations:
 # 
-# On observing the joint distribution of $\alpha, \beta$, we note that $\beta > \alpha$  and $\beta$ is closer to zero. 
+# On observing the joint distribution of $\alpha, \beta$, we note that $\beta < \alpha$  and $\beta$ is closer to zero. 
 # Here, $\beta$ can be interpreted as _learning ability_, i.e., the ability of a dog to learn from _shock_ experiences. The increase in number of shocks barely raises the probability of non-avoidance (value of 𝜋𝑗) with little amount. Unless the trials & shocks increase considerably large in progression, it doesn't mellow down well and mostly stays around 0.9.
 # 
-# However, it is not the case with $\alpha, \alpha$ is more negative & farthest from 'zero'. It imparts a significant decline in non-avoidance (𝜋𝑗) even for few instances where dog avoids the shock; therefore $\alpha$ can be interpreted as _retention ability_ i.e., the ability to retain the learning from previous shock experiences.
+# However, it is not the case with $\alpha, \alpha$ is more positive & farthest from 'zero'. It imparts a significant decline in non-avoidance (𝜋𝑗) even for few instances where dog avoids the shock; therefore $\alpha$ can be interpreted as _retention ability_ i.e., the ability to retain the learning from previous shock experiences.
 
 # In[56]:
 
@@ -896,10 +931,10 @@ print(chain_samples_df_A["alpha"].describe(),"\n\n", chain_samples_df_A["beta"].
 
 # Let us look at $\frac{\alpha}{\beta}$ as a proxy to see which of the two (_learning ability_ and _retention_ability) are domimant. 
 # 
-# We are using $\frac{\alpha}{\beta}$ as a probing device to answer that question, and similar quantities can be defined. With MCMC samples available, we can get posterior probabilties of any function of the model parameters (here $\alpha, \beta$. Say, we can be interested in the $E(\frac{\alpha}{\beta})$ or $P(\frac{\alpha}{\beta}<1)$.
+# We are using $\frac{\alpha}{\beta}$ as a probing device to answer that question, and similar quantities can be defined. With MCMC samples available, we can get posterior probabilties of any function of the model parameters (here $\alpha, \beta$. Say, we can be interested in the $E(\frac{\alpha}{\beta})$ or $P(\frac{\alpha}{\beta}>1)$.
 # 
 # The latter quantity can be estimate by the Monte Carlo average as follows:
-# $P(\frac{\alpha}{\beta}>1) = \frac{1}{n}\sum_{t=1}^{n} I(\alpha < \beta)$, i.e, the fraction of times $\alpha < \beta$.
+# $P(\frac{\alpha}{\beta}>1) = \frac{1}{n}\sum_{t=1}^{n} I(\alpha > \beta)$, i.e, the fraction of times $\alpha > \beta$.
 
 # In[59]:
 
@@ -910,11 +945,19 @@ p = np.mean(x1<x2)
 print(p)
 
 
-# So, the posterior evident for _retention ability_ outweigting _learning abilty_ is overwhelming.  
+# So, the posterior evidence for _retention ability_ outweigting _learning abilty_ is overwhelming. Had the model fit was alright, this is the conclusion we would have drawn.
 
 # ### 9. Commentary
-# .
 # 
-# TBD.
+# 1. Analyzing this dataset was turned out be more complicated than we originally thought. Very little is known about the data or prior analysis technique. Both WinBUGs and Stan, fell short of providing any reasonable analysis, except providing a code in model. This is hardly useful for a practitioner
+# 
+# 2. `pyro`s documentation is very poort. The parametrizations of the distribution has to be made very clear. There is no standard convention for defining the parameters of a distribution. For example, winBUGs, MATLAB, and Wikipedia can all define some distributions differnetly. If not checked carefull, one could be using variance in place of precision.
 
-# ____________________
+# ### 10. Exercises
+# 
+# 1. Derive the expected value of Dogs getting shocked under the prior.
+# 2. Derive the expected value of Dogs getting shocked under the posterior.
+# 3. Verify the asymptotic analysis of the prior and posterior predicted responses provided.
+# 3. Use `sigmoid` link function, instead of `exp`, and complete the model specification, and carry out the inference?
+# 4. Instead of modeling the entire trails, consider the data at the last trais. Develop a model to analyze this aggregate data.
+# 5. Devevelop and implement an experiment to validate or invalidate the hypothesis that, under complete data, predicted poster responses at an intermediate trial need to not be sandwitched between data and prior.

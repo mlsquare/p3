@@ -1,7 +1,7 @@
 #!/usr/bin/env python
 # coding: utf-8
 
-# In[2]:
+# In[21]:
 
 
 import numpy as np
@@ -26,7 +26,7 @@ import ipywidgets as widgets
 from IPython.display import display, clear_output
 
 
-# In[3]:
+# In[22]:
 
 
 def sim_y(xa,xs,a,b):
@@ -35,7 +35,7 @@ def sim_y(xa,xs,a,b):
     return y
 
 
-# In[10]:
+# In[23]:
 
 
 n = 5000
@@ -52,22 +52,22 @@ print(np.mean(y))
 print((1-np.exp(-high))/high)
 
 
-# In[19]:
+# In[28]:
 
 
 n = 500
 m = 25
-high = 10
+high = 0.01
 a = np.random.uniform(low=0,high=high,size=n)
 b = np.random.uniform(low=0,high=high,size=n)
 y = np.zeros((n,m))
 for i in range(n):
     a_local = a[i]
     b_local = b[i]
-    y[i,0] = 1; #np.random.binomial(1,0.5)
+    y[i,0] = np.random.binomial(1,0.2)
     for j in range(1,m):
-        xa = np.sum(y[i,:(j-1)])
-        xs = (j)-xa
+        xs = np.sum(y[i,:(j-1)])
+        xa = (j)-xs
         #print(i,j,xa,xs)
         y[i,j] = sim_y(xa,xs,a_local,b_local)
 

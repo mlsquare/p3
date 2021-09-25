@@ -272,7 +272,7 @@
 </div>
 <div class="cell_output docutils container">
 <img alt="../../_images/ch01_exp_2_0.png" src="../../_images/ch01_exp_2_0.png" />
-<div class="output stream highlight-myst-ansi notranslate"><div class="highlight"><pre><span></span>0.0938
+<div class="output stream highlight-myst-ansi notranslate"><div class="highlight"><pre><span></span>0.1002
 0.09999546000702375
 </pre></div>
 </div>
@@ -282,17 +282,17 @@
 <div class="cell_input docutils container">
 <div class="highlight-ipython3 notranslate"><div class="highlight"><pre><span></span><span class="n">n</span> <span class="o">=</span> <span class="mi">500</span>
 <span class="n">m</span> <span class="o">=</span> <span class="mi">25</span>
-<span class="n">high</span> <span class="o">=</span> <span class="mi">10</span>
+<span class="n">high</span> <span class="o">=</span> <span class="mf">0.01</span>
 <span class="n">a</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">random</span><span class="o">.</span><span class="n">uniform</span><span class="p">(</span><span class="n">low</span><span class="o">=</span><span class="mi">0</span><span class="p">,</span><span class="n">high</span><span class="o">=</span><span class="n">high</span><span class="p">,</span><span class="n">size</span><span class="o">=</span><span class="n">n</span><span class="p">)</span>
 <span class="n">b</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">random</span><span class="o">.</span><span class="n">uniform</span><span class="p">(</span><span class="n">low</span><span class="o">=</span><span class="mi">0</span><span class="p">,</span><span class="n">high</span><span class="o">=</span><span class="n">high</span><span class="p">,</span><span class="n">size</span><span class="o">=</span><span class="n">n</span><span class="p">)</span>
 <span class="n">y</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">zeros</span><span class="p">((</span><span class="n">n</span><span class="p">,</span><span class="n">m</span><span class="p">))</span>
 <span class="k">for</span> <span class="n">i</span> <span class="ow">in</span> <span class="nb">range</span><span class="p">(</span><span class="n">n</span><span class="p">):</span>
     <span class="n">a_local</span> <span class="o">=</span> <span class="n">a</span><span class="p">[</span><span class="n">i</span><span class="p">]</span>
     <span class="n">b_local</span> <span class="o">=</span> <span class="n">b</span><span class="p">[</span><span class="n">i</span><span class="p">]</span>
-    <span class="n">y</span><span class="p">[</span><span class="n">i</span><span class="p">,</span><span class="mi">0</span><span class="p">]</span> <span class="o">=</span> <span class="mi">1</span><span class="p">;</span> <span class="c1">#np.random.binomial(1,0.5)</span>
+    <span class="n">y</span><span class="p">[</span><span class="n">i</span><span class="p">,</span><span class="mi">0</span><span class="p">]</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">random</span><span class="o">.</span><span class="n">binomial</span><span class="p">(</span><span class="mi">1</span><span class="p">,</span><span class="mf">0.2</span><span class="p">)</span>
     <span class="k">for</span> <span class="n">j</span> <span class="ow">in</span> <span class="nb">range</span><span class="p">(</span><span class="mi">1</span><span class="p">,</span><span class="n">m</span><span class="p">):</span>
-        <span class="n">xa</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">sum</span><span class="p">(</span><span class="n">y</span><span class="p">[</span><span class="n">i</span><span class="p">,:(</span><span class="n">j</span><span class="o">-</span><span class="mi">1</span><span class="p">)])</span>
-        <span class="n">xs</span> <span class="o">=</span> <span class="p">(</span><span class="n">j</span><span class="p">)</span><span class="o">-</span><span class="n">xa</span>
+        <span class="n">xs</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">sum</span><span class="p">(</span><span class="n">y</span><span class="p">[</span><span class="n">i</span><span class="p">,:(</span><span class="n">j</span><span class="o">-</span><span class="mi">1</span><span class="p">)])</span>
+        <span class="n">xa</span> <span class="o">=</span> <span class="p">(</span><span class="n">j</span><span class="p">)</span><span class="o">-</span><span class="n">xs</span>
         <span class="c1">#print(i,j,xa,xs)</span>
         <span class="n">y</span><span class="p">[</span><span class="n">i</span><span class="p">,</span><span class="n">j</span><span class="p">]</span> <span class="o">=</span> <span class="n">sim_y</span><span class="p">(</span><span class="n">xa</span><span class="p">,</span><span class="n">xs</span><span class="p">,</span><span class="n">a_local</span><span class="p">,</span><span class="n">b_local</span><span class="p">)</span>
 
