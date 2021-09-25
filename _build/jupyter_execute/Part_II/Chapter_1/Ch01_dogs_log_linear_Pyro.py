@@ -263,7 +263,23 @@ original_plus_simulated_prior_data = base.simulate_observations_given_prior_post
                                                                                             model_uniform_b= prior_samples_b)
 
 
-# We notice something very strange. We thought the priors on $\alpha, \beta$ are flat, which is true. But they are not non-informative. In fact, they are extremely informative for $\pi_{ij}$, since  _a priori_, it has a right skwed distribution, with mode at 0. As a result, _a priori_, we think that, Dogs getting shocked is very low. 
+# We notice something very strange. We thought the priors on $\alpha, \beta$ are flat, which is true, but naively we assumed they will turn out be non-informative as well. 
+# 
+# But they are not non-informative. In fact, they are extremely informative for $\pi_{ij}$, since  _a priori_, it has a right skwed distribution, with mode at 0. As a result, _a priori_, we think that, Dogs getting shocked is very low. 
+# 
+# Let us investigate little more formally. Say, we observed $X_a=1, X_s=0$, and also consider uniform priors $U(0,b), b>0$ for both $\alpha,\beta$.
+# 
+# Then, $\pi = \exp(-\alpha)$ with $\alpha \sim U(0,b)$. We can calculate the _prior expected value_ analtucally, as follows:
+# 
+# $$E_{pr}(\hat{y}) = \frac{1}{b}\int_{0}^{b} \exp(-\alpha) = (1-\exp(-b))/b$$
+# 
+# with $\lim_{b \to 0} E_{pr}(\hat{y}) = 1 $, implying that, for supposdely a non-informative prior, we have strong prior belief that, Dogs will avoid shocks, with certainity. 
+# 
+# Let us generalize the setting further. Suppose, we are at, we at the n-th trail. Let $x_a, x_s$ be the avoidances and shocks upto this trail. Then,
+# 
+# $$E_{pr}(\hat{y}) = \frac{1}{b^2}\int_{0}^{b} \exp(-\alpha x_a) \int_{0}^{b} \exp(-\beta x_s) = \frac{1}{b^2 x_a x_s}(1-\exp(-bx_a))(1-\exp(-bx_s))$$
+# 
+# Notice that, as the number of trails $n = x_a+x_s+1$ increases, the expected values decreases to 0 at rate $O(1/b^2n)$. Thefore, eventually, Dogs learn to avoid, with certainty, is the _a priori_ behaviour.
 
 # ### 4. Posterior Estimation
 # 
@@ -649,7 +665,7 @@ sns.pairplot(data=fit_df_B, hue= "chain");
 # In particular, just like the Prior Predictive Check, we are intereted in the posterior expected value of a Dog getting shocked. This quantity can be estimated by the Monte Carlo average:
 # 
 # <br>
-# $E_{P(\alpha ,\beta |y)}(\hat{y_j})$
+# $ E_{P(\alpha ,\beta |y)}(\hat{y_j}) $
 # 
 # $\,\,\,\, = E_{P(\alpha,\beta|y_j)}(\exp(-(\alpha X_{a} + \beta X_{s})))))$
 # 
@@ -682,6 +698,35 @@ original_plus_simulated_data_posterior_df= pd.DataFrame(original_plus_simulated_
 base.save_parameter_chain_dataframe(original_plus_simulated_data_posterior_df, 
                                     "data/dogs_original_plus_simulated_data_model_1ab.csv")
 
+
+# Something weird happenning. The posterior expected value of a Dog getting shocked is larger than the prior and also the observed data.
+# 
+# We expect the posterior expected value to lie between data and prior, some sort of a weighed average of prior and data. Why is this happenning? Let us investiage.
+# 
+# Can we compute the posterior, and prior expectations analytically to prove the point. Since sampling distribution and prior for $\alpha, \beta$ are not conjugate, we can not analytically compute it. At least, it is not trivial. But we will simply the situation, just to gain insights into the problem.
+# 
+# Say, we observed $X_a=1, X_s=0, y=1$, and also consider uniform priors $U(0,b), b>0$ for both $\alpha,\beta$.
+# 
+# Then, $\pi = \exp(-\alpha)$ with $\alpha \sim U(0,b)$. We can calculate the _prior expected value_ analtucally, as follows:
+# 
+# $E_{pr}(\hat{y}) = \frac{1}{b}\int_{0}^{b} \exp(-\alpha) = (1-\exp(-b))/b$
+# 
+# Likewise, _prior expected value_ can be caluclated, at the second trial. But before that, we need to calculate the posterior distribution. Assume that, we observed $y=1$. Then,
+# 
+# 
+# $P(\alpha,\beta | y=1, X_a=1, X_s=0) \propto \exp(-\alpha) I(0,b)$
+# 
+# $\implies$
+# 
+# $E_{po}(\hat{y} | y=1, X_a=1, X_s=0)= \frac{1}{1-\exp(-b)}\int_0^{b} \exp(-2\alpha) = \frac{0.5(1-\exp(-2b))}{1-\exp(-b)}$
+# 
+# 
+# Since we know $y=1$, hypothesis is $ \frac{0.5(1-\exp(-2b))}{1-\exp(-b)} \le 1-\exp(-b)$. Let us verify if this inquality is true. At least for $b >> 1$ large, say $b=10, \exp(-b) \approx 0$. Therefore, for flat prior, $ 0.5 \le 1$, which is true. We will not prove but, we anticipate the same behaviour being true for any observed data.
+# 
+# Now we detected a problem. What could be happenning? Few plausible explanations:
+# 
+# - Recall that, the prior was very informative (very strong prior on Dogs gets shocked) but data is far from it. There is a misfit between the data and prior. 
+# - Upon inspection, realized that the `pyro` sampler draws samples around 0. Which in this case means, that,  
 
 # ### 7. Model Comparison
 # 
