@@ -1,0 +1,512 @@
+
+<!DOCTYPE html>
+
+<html>
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Foreword: &#8212; Probabilistic-Programming-with-Pyro</title>
+    
+  <link href="_static/css/theme.css" rel="stylesheet" />
+  <link href="_static/css/index.c5995385ac14fb8791e8eb36b4908be2.css" rel="stylesheet" />
+
+    
+  <link rel="stylesheet"
+    href="_static/vendor/fontawesome/5.13.0/css/all.min.css">
+  <link rel="preload" as="font" type="font/woff2" crossorigin
+    href="_static/vendor/fontawesome/5.13.0/webfonts/fa-solid-900.woff2">
+  <link rel="preload" as="font" type="font/woff2" crossorigin
+    href="_static/vendor/fontawesome/5.13.0/webfonts/fa-brands-400.woff2">
+
+    
+      
+
+    
+    <link rel="stylesheet" href="_static/pygments.css" type="text/css" />
+    <link rel="stylesheet" href="_static/sphinx-book-theme.e8f53015daec13862f6db5e763c41738.css" type="text/css" />
+    <link rel="stylesheet" type="text/css" href="_static/togglebutton.css" />
+    <link rel="stylesheet" type="text/css" href="_static/copybutton.css" />
+    <link rel="stylesheet" type="text/css" href="_static/mystnb.css" />
+    <link rel="stylesheet" type="text/css" href="_static/sphinx-thebe.css" />
+    <link rel="stylesheet" type="text/css" href="_static/panels-main.c949a650a448cc0ae9fd3441c0e17fb0.css" />
+    <link rel="stylesheet" type="text/css" href="_static/panels-variables.06eb56fa6e07937060861dad626602ad.css" />
+    
+  <link rel="preload" as="script" href="_static/js/index.1c5a1a01449ed65a7b51.js">
+
+    <script id="documentation_options" data-url_root="./" src="_static/documentation_options.js"></script>
+    <script src="_static/jquery.js"></script>
+    <script src="_static/underscore.js"></script>
+    <script src="_static/doctools.js"></script>
+    <script src="_static/togglebutton.js"></script>
+    <script src="_static/clipboard.min.js"></script>
+    <script src="_static/copybutton.js"></script>
+    <script >var togglebuttonSelector = '.toggle, .admonition.dropdown, .tag_hide_input div.cell_input, .tag_hide-input div.cell_input, .tag_hide_output div.cell_output, .tag_hide-output div.cell_output, .tag_hide_cell.cell, .tag_hide-cell.cell';</script>
+    <script src="_static/sphinx-book-theme.12a9622fbb08dcb3a2a40b2c02b83a57.js"></script>
+    <script async="async" src="https://unpkg.com/thebe@0.5.1/lib/index.js"></script>
+    <script >
+        const thebe_selector = ".thebe,.cell"
+        const thebe_selector_input = "pre,.cell_input div.highlight"
+        const thebe_selector_output = ".output,.cell_output"
+    </script>
+    <script async="async" src="_static/sphinx-thebe.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/require.js/2.3.4/require.min.js"></script>
+    <link rel="index" title="Index" href="genindex.html" />
+    <link rel="search" title="Search" href="search.html" />
+    <link rel="next" title="Chapter 01: Probability Theory" href="Part_I/chapter_01/ch01_probability_theory.html" />
+    <link rel="prev" title="Probabilitic Programming" href="intro.html" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <meta name="docsearch:language" content="en" />
+    
+  </head>
+  <body data-spy="scroll" data-target="#bd-toc-nav" data-offset="80">
+    
+    <div class="container-fluid" id="banner"></div>
+
+    
+
+    <div class="container-xl">
+      <div class="row">
+          
+<div class="col-12 col-md-3 bd-sidebar site-navigation show" id="site-navigation">
+    
+        <div class="navbar-brand-box">
+    <a class="navbar-brand text-wrap" href="index.html">
+      
+      <img src="_static/ppyro_logo.gif" class="logo" alt="logo">
+      
+      
+      <h1 class="site-logo" id="site-title">Probabilistic-Programming-with-Pyro</h1>
+      
+    </a>
+</div><form class="bd-search d-flex align-items-center" action="search.html" method="get">
+  <i class="icon fas fa-search"></i>
+  <input type="search" class="form-control" name="q" id="search-input" placeholder="Search this book..." aria-label="Search this book..." autocomplete="off" >
+</form><nav class="bd-links" id="bd-docs-nav" aria-label="Main">
+    <div class="bd-toc-item active">
+        <ul class="nav bd-sidenav">
+ <li class="toctree-l1">
+  <a class="reference internal" href="intro.html">
+   Probabilitic Programming
+  </a>
+ </li>
+</ul>
+<p class="caption">
+ <span class="caption-text">
+  _______
+ </span>
+</p>
+<ul class="current nav bd-sidenav">
+ <li class="toctree-l1 current active">
+  <a class="current reference internal" href="#">
+   Foreword:
+  </a>
+ </li>
+</ul>
+<p class="caption">
+ <span class="caption-text">
+  Part I
+ </span>
+</p>
+<ul class="nav bd-sidenav">
+ <li class="toctree-l1">
+  <a class="reference internal" href="Part_I/chapter_01/ch01_probability_theory.html">
+   Chapter 01: Probability Theory
+  </a>
+ </li>
+ <li class="toctree-l1">
+  <a class="reference internal" href="Part_I/chapter_02/ch02_estimation_theory.html">
+   Chapter 02: Estimation Theory
+  </a>
+ </li>
+ <li class="toctree-l1">
+  <a class="reference internal" href="Part_I/chapter_03/ch03_decision_theory.html">
+   Chapter 03: Decision Theory
+  </a>
+ </li>
+ <li class="toctree-l1">
+  <a class="reference internal" href="Part_I/chapter_04/ch04_bayesian_analysis.html">
+   Chapter 04: Bayesian Analysis
+  </a>
+ </li>
+ <li class="toctree-l1">
+  <a class="reference internal" href="Part_I/chapter_05/ch05_computational_bayesian_analysis.html">
+   Chapter 05: Computational Bayesian Analysis
+  </a>
+ </li>
+</ul>
+<p class="caption">
+ <span class="caption-text">
+  Part II
+ </span>
+</p>
+<ul class="nav bd-sidenav">
+ <li class="toctree-l1">
+  <a class="reference internal" href="Part_II/chapter_01/ch01_dogs_log_linear_pyro.html">
+   Chapter 01: Log-Linear Model
+  </a>
+ </li>
+</ul>
+
+    </div>
+</nav> <!-- To handle the deprecated key -->
+
+<div class="navbar_extra_footer">
+  Powered by <a href="https://jupyterbook.org">Jupyter Book</a>
+</div>
+
+</div>
+
+
+          
+
+
+          
+<main class="col py-md-3 pl-md-4 bd-content overflow-auto" role="main">
+    
+    <div class="topbar container-xl fixed-top">
+    <div class="topbar-contents row">
+        <div class="col-12 col-md-3 bd-topbar-whitespace site-navigation show"></div>
+        <div class="col pl-md-4 topbar-main">
+            
+            <button id="navbar-toggler" class="navbar-toggler ml-0" type="button" data-toggle="collapse"
+                data-toggle="tooltip" data-placement="bottom" data-target=".site-navigation" aria-controls="navbar-menu"
+                aria-expanded="true" aria-label="Toggle navigation" aria-controls="site-navigation"
+                title="Toggle navigation" data-toggle="tooltip" data-placement="left">
+                <i class="fas fa-bars"></i>
+                <i class="fas fa-arrow-left"></i>
+                <i class="fas fa-arrow-up"></i>
+            </button>
+            
+            
+<div class="dropdown-buttons-trigger">
+    <button id="dropdown-buttons-trigger" class="btn btn-secondary topbarbtn" aria-label="Download this page"><i
+            class="fas fa-download"></i></button>
+
+    <div class="dropdown-buttons">
+        <!-- ipynb file if we had a myst markdown file -->
+        
+        <!-- Download raw file -->
+        <a class="dropdown-buttons" href="_sources/foreword.md"><button type="button"
+                class="btn btn-secondary topbarbtn" title="Download source file" data-toggle="tooltip"
+                data-placement="left">.md</button></a>
+        <!-- Download PDF via print -->
+        <button type="button" id="download-print" class="btn btn-secondary topbarbtn" title="Print to PDF"
+            onClick="window.print()" data-toggle="tooltip" data-placement="left">.pdf</button>
+    </div>
+</div>
+
+            <!-- Source interaction buttons -->
+
+<div class="dropdown-buttons-trigger">
+    <button id="dropdown-buttons-trigger" class="btn btn-secondary topbarbtn"
+        aria-label="Connect with source repository"><i class="fab fa-github"></i></button>
+    <div class="dropdown-buttons sourcebuttons">
+        <a class="repository-button"
+            href="https://github.com/mlsquare/p3"><button type="button" class="btn btn-secondary topbarbtn"
+                data-toggle="tooltip" data-placement="left" title="Source repository"><i
+                    class="fab fa-github"></i>repository</button></a>
+        <a class="issues-button"
+            href="https://github.com/mlsquare/p3/issues/new?title=Issue%20on%20page%20%2Fforeword.html&body=Your%20issue%20content%20here."><button
+                type="button" class="btn btn-secondary topbarbtn" data-toggle="tooltip" data-placement="left"
+                title="Open an issue"><i class="fas fa-lightbulb"></i>open issue</button></a>
+        
+    </div>
+</div>
+
+            <!-- Full screen (wrap in <a> to have style consistency -->
+
+<a class="full-screen-button"><button type="button" class="btn btn-secondary topbarbtn" data-toggle="tooltip"
+        data-placement="bottom" onclick="toggleFullScreen()" aria-label="Fullscreen mode"
+        title="Fullscreen mode"><i
+            class="fas fa-expand"></i></button></a>
+
+            <!-- Launch buttons -->
+
+        </div>
+
+        <!-- Table of contents -->
+        <div class="d-none d-md-block col-md-2 bd-toc show">
+            
+            <div class="tocsection onthispage pt-5 pb-3">
+                <i class="fas fa-list"></i> Contents
+            </div>
+            <nav id="bd-toc-nav" aria-label="Page">
+                <ul class="visible nav section-nav flex-column">
+ <li class="toc-h2 nav-item toc-entry">
+  <a class="reference internal nav-link" href="#objective">
+   Objective:
+  </a>
+ </li>
+ <li class="toc-h2 nav-item toc-entry">
+  <a class="reference internal nav-link" href="#gaps-in-ml-science">
+   Gaps in ML Science
+  </a>
+ </li>
+ <li class="toc-h2 nav-item toc-entry">
+  <a class="reference internal nav-link" href="#gaps-in-bayesian-tooling">
+   Gaps in Bayesian Tooling
+  </a>
+ </li>
+ <li class="toc-h2 nav-item toc-entry">
+  <a class="reference internal nav-link" href="#approach">
+   Approach
+  </a>
+  <ul class="nav section-nav flex-column">
+   <li class="toc-h3 nav-item toc-entry">
+    <a class="reference internal nav-link" href="#data-first-not-model-first">
+     Data-first, not Model-first:
+    </a>
+   </li>
+   <li class="toc-h3 nav-item toc-entry">
+    <a class="reference internal nav-link" href="#case-based-not-concept-based">
+     Case-based, not Concept-based:
+    </a>
+   </li>
+   <li class="toc-h3 nav-item toc-entry">
+    <a class="reference internal nav-link" href="#exploratory-not-confirmatory">
+     Exploratory, not confirmatory
+    </a>
+   </li>
+   <li class="toc-h3 nav-item toc-entry">
+    <a class="reference internal nav-link" href="#build-up-not-ground-up">
+     Build-up, not ground-up
+    </a>
+   </li>
+   <li class="toc-h3 nav-item toc-entry">
+    <a class="reference internal nav-link" href="#learn-by-doing-not-learn-by-reading">
+     Learn-by-Doing, not Learn-by-Reading
+    </a>
+   </li>
+  </ul>
+ </li>
+ <li class="toc-h2 nav-item toc-entry">
+  <a class="reference internal nav-link" href="#output">
+   Output
+  </a>
+ </li>
+ <li class="toc-h2 nav-item toc-entry">
+  <a class="reference internal nav-link" href="#organization">
+   Organization
+  </a>
+  <ul class="nav section-nav flex-column">
+   <li class="toc-h3 nav-item toc-entry">
+    <a class="reference internal nav-link" href="#part-1-foundations">
+     Part-1: Foundations:
+    </a>
+   </li>
+   <li class="toc-h3 nav-item toc-entry">
+    <a class="reference internal nav-link" href="#part-2-small-scale-bayesian-analysis">
+     Part-2: Small-Scale Bayesian Analysis:
+    </a>
+   </li>
+   <li class="toc-h3 nav-item toc-entry">
+    <a class="reference internal nav-link" href="#part-3-large-scale-bayesian-analysis">
+     Part-3: Large-Scale Bayesian Analysis:
+    </a>
+   </li>
+   <li class="toc-h3 nav-item toc-entry">
+    <a class="reference internal nav-link" href="#part-4-advanced-methods">
+     Part-4: Advanced Methods
+    </a>
+   </li>
+   <li class="toc-h3 nav-item toc-entry">
+    <a class="reference internal nav-link" href="#part-5-bayesian-counterparts-to-ml-classics">
+     Part-5: Bayesian counterparts to ML Classics
+    </a>
+    <ul class="nav section-nav flex-column">
+     <li class="toc-h4 nav-item toc-entry">
+      <a class="reference internal nav-link" href="#part-6-contributed-chapters">
+       Part-6: Contributed Chapters
+      </a>
+     </li>
+    </ul>
+   </li>
+  </ul>
+ </li>
+ <li class="toc-h2 nav-item toc-entry">
+  <a class="reference internal nav-link" href="#evolution-contribution">
+   Evolution &amp; Contribution:
+  </a>
+ </li>
+</ul>
+
+            </nav>
+        </div>
+    </div>
+</div>
+    <div id="main-content" class="row">
+        <div class="col-12 col-md-9 pl-md-3 pr-md-0">
+        
+              <div>
+                
+  <div class="section" id="foreword">
+<h1>Foreword:<a class="headerlink" href="#foreword" title="Permalink to this headline">¶</a></h1>
+<div class="section" id="objective">
+<h2>Objective:<a class="headerlink" href="#objective" title="Permalink to this headline">¶</a></h2>
+<ul class="simple">
+<li><p>Make Bayesian Analysis and Modelling techniques accessible to ML Practitioners.</p></li>
+<li><p>Make Scalable computing tools accessible to Statisticians.</p></li>
+</ul>
+</div>
+<div class="section" id="gaps-in-ml-science">
+<h2>Gaps in ML Science<a class="headerlink" href="#gaps-in-ml-science" title="Permalink to this headline">¶</a></h2>
+<p>Problems with Machine Learning and Deep Learning:</p>
+<p>Majority of both classical and modern ML and DL methods rarely go beyond “predictions such as, such as robustness, uncertainty quantification, interpretability, explainability, low data paradigms. There is a strong and urgent need for Holistic Machine Learning, where all the aspects are given the right importance, instead of obsessively focussing on achieving state-of-the-art performances. Of course, the situation is rapidly changing. But, the field is being reinvented. Many known concepts that were established in 1950s-60s are simply being resurrected, albeit with new marketing terms, and most importantly, not recognizing the work done by some of the brightest minds of the bygone era. One of the goals in assembling these data journals is to make those ideas and techniques accessible to the ML community.</p>
+</div>
+<div class="section" id="gaps-in-bayesian-tooling">
+<h2>Gaps in Bayesian Tooling<a class="headerlink" href="#gaps-in-bayesian-tooling" title="Permalink to this headline">¶</a></h2>
+<p>There are three main ingredients to doing Bayesian Analysis 1) data 2) models 3) fit. For the frequentist counterpart, usually Analysts will spend time iterating between (1) and (2) and use routine commercial/open source software for (3). However, a Bayesian Analyst often needs to implement even the fitting mechanism (MCMC sampler, for example). If something is not working, the Analyst is fraught between figuring out what is wrong among the three 1) Is the model a wrong one?  Model is OK, but the technical derivation of the sampling is wrong or finally, is the problem just too hard for the sampler. Debugging and testing is incredibly hard due to these confounding factors.</p>
+<p>Fortunately, with tools like winBUGS, and most recently, Stan, fitting Bayesian models became declarative and less painful. General purpose samplers take care of approximating the posterior draws. Nevertheless, if something fails, like in the case of winBUGs, there is very little the Analyst could do. There is no control. Also, with the exception of Stan perhaps, these tools do not scale well for the modern world. The Deep Learning community has made tremendous contributions on the technology side with frameworks like PyTorch, TensorFlow etc, which can handle data and models in sizes not comparable. Bayesian Deep Learning is also becoming attractive, thanks to HMC and PyTorch, and GPU-backed frameworks. Therefore, Bayesians, and Statisticians need to embrace these modern technologies, and build their science on the top.</p>
+</div>
+<div class="section" id="approach">
+<h2>Approach<a class="headerlink" href="#approach" title="Permalink to this headline">¶</a></h2>
+<div class="section" id="data-first-not-model-first">
+<h3>Data-first, not Model-first:<a class="headerlink" href="#data-first-not-model-first" title="Permalink to this headline">¶</a></h3>
+<p>Alright, we have vented out the frustration. What is the way out? Majority of the books/ teaching material on the Statistics side are concept-centric. Even though many books have companion codes, datasets, and notebooks, they are still concept centric. They use the data or the model to make a point selectively, without the context. In this compendium, we take a dataset first view. We are given a dataset, ask ourselves, what are the objectives of the experiment? What modeling is required?</p>
+<p>Andrew Ng[1], talks about Data-centric, not Model-centric AI, albeit in a different context.</p>
+</div>
+<div class="section" id="case-based-not-concept-based">
+<h3>Case-based, not Concept-based:<a class="headerlink" href="#case-based-not-concept-based" title="Permalink to this headline">¶</a></h3>
+<p>Instead of cherry picking a technique first, in the data-first approach, we pick the dataset, and solve. And most importantly, solve in an end-to-end fashion. As a result, the flow may not be linear, and the reader is taken through the journey of discovering and fixing problems.
+Both Profs. Gelman and Betancourt et talk about principled ways to approach a problem, particularly from a Bayesian stand-point [2,3]</p>
+</div>
+<div class="section" id="exploratory-not-confirmatory">
+<h3>Exploratory, not confirmatory<a class="headerlink" href="#exploratory-not-confirmatory" title="Permalink to this headline">¶</a></h3>
+<p>Due to legacy pedagogy, every problem has an answer or needs to have an answer. Sometimes, problems are created with an end in sight. Not with a data-first, case-based approach.  However, It is not necessary that a problem be solved in the usual sense. It can end up in a negative result. The conclusion could be that the scientific question can not be answered with the experimental data available, or better tools/ approaches are required or the model is plain junk.</p>
+<p>Premier ML conferences like NuerIPS are encouraging pre-registration to beat confirmation bias. This article in science  and encourage [4,5]</p>
+</div>
+<div class="section" id="build-up-not-ground-up">
+<h3>Build-up, not ground-up<a class="headerlink" href="#build-up-not-ground-up" title="Permalink to this headline">¶</a></h3>
+<p>There are many datasets available such as UCI, WinBUGs, along with codes, which were discussed in various formats (books, blogs, etc..). Take those datasets, and translate the models and analysis, where possible, into one of the many Probabilistic Programming tools. The benefit is that, those familiar in one domain, can relate to the translated counterparts</p>
+</div>
+<div class="section" id="learn-by-doing-not-learn-by-reading">
+<h3>Learn-by-Doing, not Learn-by-Reading<a class="headerlink" href="#learn-by-doing-not-learn-by-reading" title="Permalink to this headline">¶</a></h3>
+<p>Data Science is a Learn-by-Doing type of discipline. Traditional format, decoupled the doing from the learning part. By placing the code, data, models, analysis – all side-by-side, the reader can learn by executing the notebooks. Where possible, we use dynamic visualizations to allow interaction with data. This is largely missing with  traditional publishing material.</p>
+<Br>
+[1] Andrew Ng: MLOPs: From Model-centric to Data-centric AI
+https://www.youtube.com/watch?v=06-AZXmwHjo 
+<Br>
+[2] Gelman et al, Bayesian workflow
+https://arxiv.org/abs/2011.01808 
+<Br>
+[3] Schad, D.J, Betancourt, M,. Vasisth, S, Towards a principled Bayesian workflow in cognitive science, 2020, 
+https://arxiv.org/abs/1904.12765 
+<Br>
+[4] https://preregister.science/ 
+<Br>
+[5] Alison Ledgerwood, The preregistration revolution needs to distinguish between predictions and analyses, PNAS, November 6, 2018 115 (45) E10516-E10517; first published October 19, 2018
+https://www.pnas.org/content/115/45/E10516 
+<Br>
+</div>
+</div>
+<div class="section" id="output">
+<h2>Output<a class="headerlink" href="#output" title="Permalink to this headline">¶</a></h2>
+<p>A collection 50+ of case studies, covering various domains, concepts, techniques, testing ideas</p>
+</div>
+<div class="section" id="organization">
+<h2>Organization<a class="headerlink" href="#organization" title="Permalink to this headline">¶</a></h2>
+<div class="section" id="part-1-foundations">
+<h3>Part-1: Foundations:<a class="headerlink" href="#part-1-foundations" title="Permalink to this headline">¶</a></h3>
+<p>All the prereqs needed will be covered such as Probability Theory, Estimation Theory..  Lot of material is out there on the internet.</p>
+</div>
+<div class="section" id="part-2-small-scale-bayesian-analysis">
+<h3>Part-2: Small-Scale Bayesian Analysis:<a class="headerlink" href="#part-2-small-scale-bayesian-analysis" title="Permalink to this headline">¶</a></h3>
+<p>Majority of the classical Bayesian analysis will be covered here. We hope to devot this part to analyzing datasets available in winBUGs, Stan, and many open sources.</p>
+</div>
+<div class="section" id="part-3-large-scale-bayesian-analysis">
+<h3>Part-3: Large-Scale Bayesian Analysis:<a class="headerlink" href="#part-3-large-scale-bayesian-analysis" title="Permalink to this headline">¶</a></h3>
+<p>Here we will make a transition from small data sets and tiny interpretable models, to big data and bigger models. Bayesian Deep Learning is one such area.</p>
+</div>
+<div class="section" id="part-4-advanced-methods">
+<h3>Part-4: Advanced Methods<a class="headerlink" href="#part-4-advanced-methods" title="Permalink to this headline">¶</a></h3>
+<p>Advanced topics such as Bayesian nonparametrics, Bayesian networks, Graphical models, will be covered. Any new models for problems covered in Part-2 also go here.</p>
+</div>
+<div class="section" id="part-5-bayesian-counterparts-to-ml-classics">
+<h3>Part-5: Bayesian counterparts to ML Classics<a class="headerlink" href="#part-5-bayesian-counterparts-to-ml-classics" title="Permalink to this headline">¶</a></h3>
+<p>Introduction to Elements of Statistical Learning by Gareth James et is popular for ML enthusiasts learning Statistical Theory. We can translate the examples/ notebooks into Python, as well as develop Bayesian analogues.</p>
+<div class="section" id="part-6-contributed-chapters">
+<h4>Part-6: Contributed Chapters<a class="headerlink" href="#part-6-contributed-chapters" title="Permalink to this headline">¶</a></h4>
+<p>Anybody that is interested in sharing their Bayesian Analysis (more than a blog) are welcome.</p>
+</div>
+</div>
+</div>
+<div class="section" id="evolution-contribution">
+<h2>Evolution &amp; Contribution:<a class="headerlink" href="#evolution-contribution" title="Permalink to this headline">¶</a></h2>
+<p>Publishing books or scholarly works is no longer the same. Writing books is now more like writing software. Books can be incrementally developed, they can be versioned, and can be made accessible in a wide variety of formats.</p>
+<p>We embrace this continuous delivery and continuous improvement aspect of agile software development and apply it to writing this book. As a result, material will evolve, without ever having to wait for the perfect, near-complete material. It will evolve in quality and quantity, with time.</p>
+</div>
+</div>
+
+    <script type="text/x-thebe-config">
+    {
+        requestKernel: true,
+        binderOptions: {
+            repo: "mlsquare/p3",
+            ref: "master",
+        },
+        codeMirrorConfig: {
+            theme: "abcdef",
+            mode: "python"
+        },
+        kernelOptions: {
+            kernelName: "python3",
+            path: "./."
+        },
+        predefinedOutput: true
+    }
+    </script>
+    <script>kernelName = 'python3'</script>
+
+              </div>
+              
+        
+            
+
+
+
+<div class='prev-next-bottom'>
+    
+    <div id="prev">
+        <a class="left-prev" href="intro.html" title="previous page">
+            <i class="prevnext-label fas fa-angle-left"></i>
+            <div class="prevnext-info">
+                <p class="prevnext-label">previous</p>
+                <p class="prevnext-title">Probabilitic Programming</p>
+            </div>
+        </a>
+    </div>
+     <div id="next">
+        <a class="right-next" href="Part_I/chapter_01/ch01_probability_theory.html" title="next page">
+            <div class="prevnext-info">
+                <p class="prevnext-label">next</p>
+                <p class="prevnext-title">Chapter 01: Probability Theory</p>
+            </div>
+            <i class="prevnext-label fas fa-angle-right"></i>
+        </a>
+     </div>
+
+</div>
+        
+        </div>
+    </div>
+    <footer class="footer mt-5 mt-md-0">
+    <div class="container">
+      <p>
+        
+          By Prakash Bisht, Soma S. Dhavala<br/>
+        
+            &copy; Copyright 2021.<br/>
+      </p>
+    </div>
+  </footer>
+</main>
+
+
+      </div>
+    </div>
+  
+  <script src="_static/js/index.1c5a1a01449ed65a7b51.js"></script>
+
+  
+  </body>
+</html>
