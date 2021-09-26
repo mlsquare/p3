@@ -4,6 +4,9 @@
 format: jb-book
 root: intro
 parts:
+  - caption: Foreword
+  chapters:
+    - file: foreword
   - caption: Part I
     chapters:
     - file: Part_I/chapter_01/ch01_probability_theory
