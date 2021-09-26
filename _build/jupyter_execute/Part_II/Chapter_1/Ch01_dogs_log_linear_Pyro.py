@@ -737,9 +737,13 @@ base.save_parameter_chain_dataframe(original_plus_simulated_data_posterior_df,
 # where $N_a = \sum_{j=1, i \in S^c}^{t} x_{i,a}(j) $. Others can be defined similarly.
 # 
 # Now the posterior at time t, can be defined as follows:
+# 
 # $$P(\alpha, \beta | data) \propto \frac{1}{b^2} L(y | \alpha,\beta) I(\alpha,\beta > 0) $$
+# 
 # which turns out to be, after some algebra,
+# 
 # $$P(\alpha, \beta | data) = \frac{1}{Z} \exp(-(\alpha N_a + \beta N_s)) (1-\exp(-(\alpha M_a + \beta M_s))) I(\alpha,\beta > 0) $$
+# 
 # where the normalization constant  $Z$ is  $$\frac{1}{(1-\exp(-bN_a))(1-\exp(-bN_s))} - \frac{1}{(1-\exp(-b(N_a+M_a))(1-\exp(-b(N_s+M_s))}$$
 # 
 # The expected response under the above posterior is:
@@ -958,11 +962,13 @@ print(p)
 # 1. Derive the expected value of Dogs getting shocked under the prior.
 # 2. Derive the expected value of Dogs getting shocked under the posterior.
 # 3. Verify the asymptotic analysis of the prior and posterior predicted responses provided.
-# 4. Use `sigmoid` link function, instead of `exp`, and complete the model specification, and carry out the inference?
-# 5. Instead of modeling the entire trails, consider the data at the last trais. Develop a model to analyze this aggregate data.
+# 4. Plot the posterior distribution, upto the normalization constant, for both models. What do you observer? Is the posterior multimodal?
+# 5. Simulate the data under any model, and held it fixed (known or observed), with a paricular _learning rate_ and _retention rate_. Now fit the model, as above. What do you observe. Is the fit better?
 # 6. Devevelop and implement an experiment to validate or invalidate the hypothesis that, under complete data, predicted poster responses at an intermediate trial need to not be sandwitched between data and prior.
-# 7. Develop a model where each Dog is allowed have its own learnign and retention parameters.
-# 8. Develop a model with conjugate priors.
-# 9. Current models in someways are performing auto-regression -- the trails are indeed repeated measures. Can this data be analyzed as time-series? If yes, eloberate the techniques.
-# 10. In the model construction, argue that covariates are negatively correlated (learning rate and retention rate). Usually, this is not a good design. What are the alternatives?
-# 11. Reproduce the results in [Stan](https://mc-stan.org/), [Edward](http://edwardlib.org/), [PymC](https://docs.pymc.io/), [BUGS](https://www.rdocumentation.org/packages/R2WinBUGS/versions/2.1-21/topics/bugs) 
+# 7. Use `sigmoid` link function, instead of `exp`, and complete the model specification, and carry out the inference?
+# 8. Instead of modeling the entire trails, consider the data at the last trais. Develop a model to analyze this aggregate data.
+# 9. Develop a model where each Dog is allowed have its own learnign and retention parameters.
+# 10. Develop a model with conjugate priors.
+# 11. Current models in someways are performing auto-regression -- the trails are indeed repeated measures. Can this data be analyzed as time-series? If yes, eloberate the techniques.
+# 12. In the model construction, argue that covariates are negatively correlated (learning rate and retention rate). Usually, this is not a good design. What are the alternatives?
+# 13. Reproduce the results in [Stan](https://mc-stan.org/), [Edward](http://edwardlib.org/), [PymC](https://docs.pymc.io/), [BUGS](https://www.rdocumentation.org/packages/R2WinBUGS/versions/2.1-21/topics/bugs)
