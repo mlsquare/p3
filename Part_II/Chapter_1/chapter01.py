@@ -158,7 +158,7 @@ class base(object):
             fig.show()
     
     @staticmethod
-    def DogsModelUniformPrior(x_avoidance, x_shocked, y):
+    def DogsModel_(x_avoidance, x_shocked, y, alpha_prior= None, beta_prior= None, activation= "exp"):
         """
         Input
         -------
@@ -168,22 +168,33 @@ class base(object):
                     & 25 trials, shaped (30, 25).
         y:           tensor holding response for all dogs & trials, example for 30 dogs
                     & 25 trials, shaped (30, 25).
-        
+        alpha_prior: pyro distribution for sampling
+        beta_prior: pyro distribution for sampling
+        activation: activation function to use inside likelihood function, default: "exp"
+
         Output
         --------
         Implements pystan model: {
-                alpha ~ uniform(-30.79, 30.79);
-                beta  ~ uniform(-30.79, 30.79);
+                alpha ~ normal(0.0, 316.2);
+                beta  ~ normal(0.0, 316.2);
                 for(dog in 1:Ndogs)  
                     for (trial in 2:Ntrials)  
                     y[dog, trial] ~ bernoulli(exp(alpha * xa[dog, trial] + beta * xs[dog, trial]));}
-        
+
+        Note: Implements model with variations of prior distribution offset by certain value & sampling activation function
+        and output variant models as 1A, 1B, 2A, 2B.
+
         """
-        sigmoid = lambda value: 1/(1+torch.exp(-value))
-        alpha = pyro.sample("alpha", dist.Uniform(-30.79, 30.79))
-        beta = pyro.sample("beta", dist.Uniform(-30.79, 30.79))
+        beta_prior= beta_prior if beta_prior else alpha_prior
+
+        activation_function = lambda name, value: {"sigmoid": 1/(1+torch.exp(-value)), "exp":torch.exp(-value)}.get(name)
+        alpha = pyro.sample("alpha", alpha_prior)#10
+        beta = pyro.sample("beta", beta_prior)
+        alpha_ = alpha + 4# offset by 4
+        beta_ = beta + 4# offset by 4
+
         with pyro.plate("data"):
-            pyro.sample("obs", dist.Bernoulli(sigmoid(alpha*x_avoidance + beta * x_shocked)), obs=y)
+            pyro.sample("obs", dist.Bernoulli(activation_function(activation, alpha_*x_avoidance + beta_*x_shocked)), obs=y)
 
     @staticmethod
     def load_data():
@@ -245,7 +256,7 @@ class base(object):
     @staticmethod
     def simulate_observations_given_param(init_obs=None, num_dogs=1, num_trials=30, 
                                         parameter_pair_list= [(-2.490809, -1.642264)], 
-                                        activation = "exp", print_logs=0, print_exceptions=0):
+                                        activation = "exp", prior_offset= 0, print_logs=0, print_exceptions=0):
         """
         Input
         -------
@@ -276,6 +287,8 @@ class base(object):
                             print("test_data: ", test_data)
                             print("trial number %s observations -- %s, %s"%(trial, test_x_avoided, test_x_shocked))
 
+                        alpha+=prior_offset# Add offset value if any
+                        beta+=prior_offset# Add offset value if any
                         calculate_pij = lambda alpha, beta, test_x_avoided, test_x_shocked: activation_function(activation, alpha*np.array(test_x_avoided) + 
                                                                                         beta*np.array(test_x_shocked))
 
@@ -305,7 +318,9 @@ class base(object):
         return simulated_data_given_pair
 
     @staticmethod
-    def simulate_observations_given_prior_posterior_pairs(original_data, init_obs=None, num_dogs=30, num_trials=24, activation_type= "exp", prior_simulations= None, **kwargs):
+    def simulate_observations_given_prior_posterior_pairs(original_data, init_obs=None, num_dogs=30, 
+                                                        num_trials=24, activation_type= "exp", 
+                                                        prior_simulations= None,  prior_offset= 0, **kwargs):
         """
         Input
         -------
@@ -325,7 +340,8 @@ class base(object):
             print("total samples count:", len(parameters_pairs), " sample example: ", parameters_pairs[:2])
 
             simulated_data_given_pair= base.simulate_observations_given_param(init_obs=init_obs, num_dogs=num_dogs, num_trials=num_trials, 
-                                                                        parameter_pair_list= parameters_pairs, activation=activation_type)#, print_logs=1
+                                                                        parameter_pair_list= parameters_pairs, activation=activation_type, 
+                                                                        prior_offset= prior_offset)#, print_logs=1
 
             print("Number of datasets/%s pairs generated: %s"%(flag, simulated_data_given_pair.shape[0]))
 
