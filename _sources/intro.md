@@ -1,22 +1,30 @@
-# Probabilitic-Programming-with-Pyro
-#### *Using Pyro, Stan, PyMC*
+# Probabilitic Programming
+ __using Pyro, Stan, PyMC__
 
-Contents
+Foreword
+
 ------
-#### Part I
-#### *Introductory concepts, Tools walkthrough*
-1. Chapter 1
+## Part I
+__Foundations__
 
-#### Part II
-#### *Small-scale bayesians problems*
-1. Module 1
+1. Probability Theory
+2. Estimation Theory
+3. Decision Theory
+4. Bayesian Analysis
+5. Computational Bayesian Analysis
+
+## Part II
+__Small-scale Bayesian Analysis__
+
+1. Chapter-01: 
 
 
 
-#### Part III
-#### *Large-scale bayesians problems*
-1. Module 1
+## Part III
+_Large-scale bayesians problems_
+1. Chapter-01: 
 
-#### Part IV
-#### *Formalising new bayesians data analysis problem*
-1. Module 1
+
+## Part IV
+__Formalising new bayesians data analysis problem__
+1. Chapter-01:
