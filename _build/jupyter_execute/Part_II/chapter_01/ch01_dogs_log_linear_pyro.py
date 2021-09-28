@@ -734,7 +734,7 @@ for chain in hmc_sample_chains_a.keys():
 
 # ### 6. Sensitivity Analysis
 # 
-# Posterior Predictive Checking (PoPC) helps examine the fit of a model to real data. The simulation parameters come from the posterior distribution. While `PoPC` incorporates model uncertainly (by averaring over all possible models), we take a simpler route to begin with, which is to sample the $\alpha, \beta$ pairs that are very plausible in the posterior (eg. the posterior means), and simulate data under this particular generative model.
+# Posterior Predictive Checking (PoPC) helps examine the fit of a model to real data. The simulation parameters come from the posterior distribution. While `PoPC` incorporates model uncertainly (by averaging over all possible models), we take a simpler route to begin with, which is to sample the $\alpha, \beta$ pairs that are very plausible in the posterior (eg. the posterior means), and simulate data under this particular generative model.
 # 
 # In particular, just like the `PiPC` (Prior Predictive Check), we are intereted in the posterior expected value of a Dog getting shocked. This quantity can be estimated by the Monte Carlo average:
 # 
@@ -743,7 +743,7 @@ for chain in hmc_sample_chains_a.keys():
 # \end{equation}$$
 # 
 # $$
-# \,\,\,\, \approx   \frac{1}{B}\sum_{t=1}^{T}\exp(-(\alpha_t X_{a} + \beta_t X_{s})))))
+# \,\,\,\, \approx   \frac{1}{T}\sum_{t=1}^{T}\exp(-(\alpha_t X_{a} + \beta_t X_{s})))))
 # $$
 # 
 # 
@@ -785,7 +785,7 @@ base.save_parameter_chain_dataframe(original_plus_simulated_data_posterior_df,
 # 
 # Then, $\pi = e^{-\alpha}$ with $\alpha \sim U(0,b)$. Earlier, we calculated the _prior expected value_ analytically as $E_{pr}[\hat{y}] = (1-e^{-b})/b$
 # 
-# Likewise, _prior expected value_ can be caluclated at the second trial. But before that, we need to calculate the posterior distribution. Assume that, we observed $y=1$. Then,
+# Likewise, _posteriror expected value_ can be caluclated at the second trial. But before that, we need to calculate the posterior distribution. Assume that, we observed $y=1$. Then,
 # 
 # $P(\alpha,\beta | y=1, X_a=1, X_s=0) \propto e^{-\alpha} I(0,b)$
 # $\implies$
@@ -842,10 +842,25 @@ base.save_parameter_chain_dataframe(original_plus_simulated_data_posterior_df,
 # - Recall that the prior was very informative (very strong prior on Dogs getting shocked) but data is far from it. There is a mismatch between data and prior. 
 # - Even the posterior, it appears, is strongly influenced by the characterization (model).
 # - Upon inspection, we realized that the `pyro` sampler draws samples around 0 during initialization. Which in this case means that initialization is very far from both the prior and the posterior. Consequently, the posterior landscape could be very rugged, NUTS struggles to get out of the sampling zone.
-# - Notice that the prior and posterior asymptotic analysis was carried out at the last trial. But, the joint likelihood is defined over horizon of the entire trials. As a result, while posterior expectation at an intermediate trial has already seen the future data (more like smoothening). Consequently, it may be possible that, the posterior and prior wont agree becuase of the data-leakage.
+# - Notice that the prior and posterior asymptotic analysis was carried out at the last trial. But, the joint likelihood is defined over horizon of the entire trials. As a result, posterior expectation at an intermediate trial has already seen the future data (more like smoothening). Consequently, it may be possible that, the posterior and prior wont agree becuase of the data-leakage.
 
 # #### Model with offset prior
-# Pass the `offset` value for priors alpha & beta by 4 to the `DogsModel` and perform prior predictive checks.
+# Pass the `offset` value 4 to the likelihood function of `DogsModel` and perform both prior & posterior predictive checks with updated model, using respective prior distribution $\alpha, \beta \sim N(0., 316.)\ I(\alpha>0)$  and $\alpha, \beta \sim U(0, 10.)$ in similar manner.
+# 
+# The offset models are therefore defined as follows:
+# 
+# __Model A (offset)__
+# <br>
+# $y_{ij} \sim Bern(\pi_{ij})$
+# <br>
+# $\pi_{ij}  =   e^{(-((\alpha+\ 4) X_{a} + (\beta+\ 4) X_{s}))}$
+# 
+# __Model B (offset)__
+# <br>
+# $y_{ij} \sim Bern(\pi_{ij})$
+# <br>
+# $\pi_{ij}  =   e^{(-((\alpha+\ 4) X_{a} + (\beta+\ 4) X_{s}))}$
+# 
 
 # In[41]:
 
