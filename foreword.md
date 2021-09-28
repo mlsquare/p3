@@ -1,6 +1,6 @@
-## Foreword:
+## Foreword
 
-### Objective:
+### Objective
 
 - Make Bayesian Analysis and Modelling techniques accessible to ML Practitioners.
 - Make Scalable computing tools accessible to Statisticians.

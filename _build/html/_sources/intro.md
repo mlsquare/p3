@@ -1,8 +1,6 @@
 # Probabilitic Programming
  __using Pyro, Stan, PyMC__
-
-Foreword
-
+ 
 ------
 ## Part I
 __Foundations__
