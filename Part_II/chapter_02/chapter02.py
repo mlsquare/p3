@@ -24,6 +24,7 @@ from pyro.infer import MCMC, NUTS
 import plotly
 import plotly.express as px
 import plotly.figure_factory as ff
+import plotly.graph_objects as go
 from statsmodels.graphics.tsaplots import plot_acf
 import ipywidgets as widgets
 from IPython.display import display, clear_output
@@ -36,12 +37,12 @@ class base(object):
         pass
 
     @staticmethod
-    def plot_original_y(original_obs,ylabel=None):
+    def plot_original_y(original_obs,ylabel=None, mode_type= "markers"):
         """
-
         Input
         -------
         original_obs: original observations/ labels from given data
+        mode_type: enter plot type, example - "markers", "lines", "lines+markers", default: "markers"
 
         returns  plotly scatter plots with number of trials on X axis & corresponding probability of getting
         shocked for each pair of (alpha, beta) passed in 'selected_pairs_list'.
@@ -52,19 +53,25 @@ class base(object):
 
         """
         # num_dogs = base.load_data()["Ndogs"] if original_obs.ndim!=1 else 1
-        num_dogs = original_obs.shape[0] if original_obs.ndim!=1 else 1
-        obs_column_names = [f'Dog_{ind+1}' for ind in range(num_dogs)] if num_dogs!=1 else ["Dogs"]
-        obs_y_df= pd.DataFrame(original_obs.T, columns=obs_column_names)
+        # num_dogs = original_obs.shape[0] if original_obs.ndim!=1 else 1
+        # obs_column_names = [f'Dog_{ind+1}' for ind in range(num_dogs)] if num_dogs!=1 else ["Dogs"]
+        # obs_y_df= pd.DataFrame(original_obs.T, columns=obs_column_names)
+        original_obs= original_obs.reshape((-1, original_obs.shape[-1]))
+        num_dogs, num_trials = original_obs.shape
+        trials_list= list(range(num_trials))
 
         if ylabel is None:
             ylabel = "Probability of shock at trial j (𝜋𝑗)"
 
         obs_y_title= "Original observed value distribution for all dogs"
-        fig = px.scatter(obs_y_df, title=obs_y_title)
+        fig = go.Figure()
+        for dogidx in range(num_dogs):
+            fig.add_trace(go.Scatter(x= trials_list, y=original_obs[dogidx],
+                            mode=mode_type,
+                            name=f'Dog_{dogidx+1}'))
+    #     fig = px.scatter(obs_y_df, title=obs_y_title)
         fig.update_layout(title=obs_y_title, xaxis_title="Trials", yaxis_title=ylabel, legend_title="Dog identifier")
         fig.show()
-    
-
 
     @staticmethod
     def DogsModel(x_avoidance, x_shocked, y, alpha_prior= None, beta_prior= None, activation= "exp"):
