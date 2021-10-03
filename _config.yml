@@ -26,6 +26,8 @@ repository:
   # path_to_book: docs # Optional path to your book, relative to the repository root
   branch: master  # Which branch of the repository should be used when creating links (optional)
 
+only_build_toc_files: true
+
 #enable plotly visualizations
 sphinx:
   config:

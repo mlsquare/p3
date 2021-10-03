@@ -17,7 +17,7 @@ parts:
   - caption: Part II
     chapters:
     - file: Part_II/chapter_01/ch01_dogs_log_linear_pyro
-    - file: Part_II/chapter_02/ch02_stacks_robust_regression_Pyro
+    - file: Part_II/chapter_02/ch02_dogs_logistic_regression_pyro
   - caption: Part III
     chapters:
     - file: path/to/part2/chapter1
