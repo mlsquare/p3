@@ -1,0 +1,52 @@
+# Book settings
+# Learn more at https://jupyterbook.org/customize/config.html
+
+title: Probabilistic-Programming-with-Pyro
+author: Prakash Bisht, Soma S. Dhavala
+logo: ppyro_logo.gif
+
+# Force re-execution of notebooks on each build.
+# See https://jupyterbook.org/content/execute.html
+execute:
+  execute_notebooks: 'off'
+  # timeout: -1
+
+# Define the name of the latex output file for PDF builds
+latex:
+  latex_documents:
+    targetname: Probabilistic-Programming-with-Pyro.tex
+
+# Add a bibtex file so that we can create citations
+bibtex_bibfiles:
+  - references.bib
+
+# Information about where the book exists on the web
+repository:
+  url: https://github.com/mlsquare/p3  # Online location of your book
+  # path_to_book: docs # Optional path to your book, relative to the repository root
+  branch: master  # Which branch of the repository should be used when creating links (optional)
+
+#enable plotly visualizations
+sphinx:
+  config:
+    html_js_files:
+    - https://cdnjs.cloudflare.com/ajax/libs/require.js/2.3.4/require.min.js
+
+parse:
+  myst_enable_extensions:
+    # don't forget to list any other extensions you want enabled,
+    # including those that are enabled by default!
+    - html_image
+    - dollarmath
+    - colon_fence
+
+# Add GitHub buttons to your book
+# See https://jupyterbook.org/customize/config.html#add-a-link-to-your-repository
+html:
+  use_issues_button: true
+  use_repository_button: true
+
+launch_buttons:
+  binderhub_url: "https://mybinder.org" 
+  thebe: true
+  # colab_url: "https://colab.research.google.com"
