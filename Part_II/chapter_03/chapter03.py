@@ -20,7 +20,6 @@ from torch import nn
 from pyro.nn import PyroModule
 from pyro.infer import MCMC, NUTS
 
-
 import plotly
 import plotly.express as px
 import plotly.figure_factory as ff
@@ -448,4 +447,256 @@ class base(object):
                 parameters=np.random.choice(parameters, param_cap, replace=False)
                 plot_parameters_for_n_chains(chains, parameters)
             else: print("Error: %s"%error)
+
+    @staticmethod
+    def plot_interaction_contours(fit_df, parameters=None, 
+                              chain="chain_0", plot_3d=False):
+        pair_count= 2
+        if plot_3d:
+            pair_count= 3
+        
+        chain_samples_df= fit_df[fit_df["chain"]==chain].copy()# chain is 'chain_3' 
+        parameters= parameters if parameters else list(set(chain_samples_df.columns)- {"chain"})
+        
+        all_combination_params= list(itertools.combinations(parameters, pair_count))
+        for param_combination in all_combination_params:
+            param_combination= list(param_combination)
+            print("\nFor parameters: '%s' & '%s'"%(param_combination, chain))
+            chain_samples_df_slice= chain_samples_df[param_combination].values
+            if plot_3d:
+                name1, name2, name3 = param_combination
+                fig = go.Figure(data=[go.Surface(z=chain_samples_df_slice)])
+                fig.update_layout(title="3D Contour plot for '%s'"%(str(param_combination)), autosize=False,
+                            xaxis_title="x (%s)"%name1, yaxis_title="y (%s)"%name2,
+                            width=500, height=500, margin=dict(l=65, r=50, b=65, t=90))
+            else:
+                param1, param2 = chain_samples_df_slice.T
+                name1, name2 = param_combination
+                colorscale = ['#7A4579', '#D56073', 'rgb(236,158,105)', (1, 1, 0.2), (0.98,0.98,0.98)]
+                fig = ff.create_2d_density(param1, param2, colorscale=colorscale, hist_color='rgb(255, 255, 150)', 
+                    point_size=4)
+                fig.update_layout(title= "%s-%s joint density plot for model"%(name1, name2), autosize=False,
+                                xaxis_title="x (%s)"%name1, yaxis_title="y (%s)"%name2)
+
+            fig.show()
+    
+    @staticmethod
+    def plot_original_y(original_obs,ylabel=None):
+        """
+
+        Input
+        -------
+        original_obs: original observations/ labels from given data
+
+        returns  plotly scatter plots with Nth day observation on X axis & corresponding stack loss
+        for each pair of (beta0, beta1, beta2, beta3, sigma) passed in 'selected_pairs_list'.
+
+        Output
+        --------
+        Plots scatter plot of all observed values of y corresponding to each given pair of 
+        beta0, beta1, beta2, beta3, sigma
+
+        """
+        num_obs = original_obs.shape[0] if original_obs.ndim!=1 else 1
+        obs_column_names = [f'Observation_{ind+1}' for ind in range(num_obs)] if num_obs!=1 else ["Observations"]
+        obs_y_df= pd.DataFrame(original_obs.T, columns=obs_column_names)
+
+        if ylabel is None:
+            ylabel = "Stack loss"
+
+        obs_y_title= "stack-loss distribution"
+        fig = px.scatter(obs_y_df, title=obs_y_title)
+        fig.update_layout(title=obs_y_title, xaxis_title="N-th Day", yaxis_title=ylabel, legend_title="Observation palette")
+        fig.show()
+
+    @staticmethod
+    def plot_y_violin(obs_y, original_obs, ylabel=None, prior_simulations=None):
+        """
+
+        Input
+        -------
+        obs_y: observations / labels 'Y' from given data.
+        original_obs: original ovbservation for given data.
+
+        returns  plotly violin plots with Nth day observation on X axis & corresponding stack loss
+        for each pair of (beta0, beta1, beta2, beta3, sigma) passed in 'selected_pairs_list'.
+
+        Output
+        --------
+        Plots violin plot of all observed values of y corresponding to each given pair of 
+        beta0, beta1, beta2, beta3, sigma
+
+        """
+        flag = "posterior" if prior_simulations is not None else "prior"
+        if ylabel is None:
+            ylabel = "Stack loss [original & simulated values]"
+        obs_y_with_original_data_df = pd.DataFrame()
+
+        obs_y_df= pd.DataFrame(obs_y)
+        obs_y_df= obs_y_df.unstack().reset_index(level=0)
+        obs_y_df.rename(columns={"level_0":"parameters", 0:"values"}, inplace=True)
+        
+        note_text= "'%s_day_X' corresponds to observations simulated from %s of the given model, "%(flag, flag)
+        if prior_simulations is not None:#Df with original Y, prior & posterior
+            ylabel= 'Stack loss [original, simulated priors & posteriros]'
+            note_text+="'prior_day_X' corresponds to observations simulated from prior of the given model"
+            for param, groupdf in obs_y_df.groupby("parameters"):
+                index = param+1
+                prior_obs_df = pd.DataFrame({"parameters": "prior_day_%s"%(index), "values":prior_simulations[:, param]})
+                groupdf["parameters"] = "posterior_day_%s"%(index)
+                groupdf= groupdf.append({"parameters":"day_%s *"%(index), "values":original_obs[param].item()}, ignore_index=True)
+                obs_y_with_original_data_df = pd.concat([obs_y_with_original_data_df, prior_obs_df, groupdf])
+        else:#Df with Only original Y & posterior
+            for param, groupdf in obs_y_df.groupby("parameters"):
+                index = param+1
+                groupdf["parameters"] = "day_%s"%(index)
+                groupdf= groupdf.append({"parameters":"day_%s *"%(index), "values":Y[param].item()}, ignore_index=True)
+                obs_y_with_original_data_df = pd.concat([obs_y_with_original_data_df, groupdf])
+        
+        note_text+=", 'day_X *' corresponds to the original observations for N-th day."
+        print("\n%s\n%s\n%s"%("_"*55, "_"*70, note_text))
+        obs_y_title= "stack-loss distribution"
+        # fig = px.box(obs_y_with_original_data_df, x="parameters", y="values")
+        fig = px.violin(obs_y_with_original_data_df, x="parameters", y="values", box=True, # draw box plot inside the violin
+                        points='all', # can be 'outliers', or False
+                    )
+        fig.update_layout(title=obs_y_title, height=600, width=900, xaxis_title="N-th Day observation", 
+                        yaxis_title=ylabel, legend_title="Observation palette")
+        fig.show()
+
+    return obs_y_with_original_data_df
+
+
+    @staticmethod
+    def simulate_observations_given_param(parameter_pair_list= [(72.2, 293.2, 506, 17.92, 8.5)]):
+        """
+        Input
+        -------
+
+
+
+        Output
+        --------
+        """
+        t1= time.time()
+        simulated_data_given_pair = []
+        
+        for parameters in parameter_pair_list:
+            beta0, beta1, beta2, beta3, sigma= parameters
+
+            mu= beta0 + beta1 * X1 + beta2 * X2 + beta3 * X3# (21,)
+            simulated_y= torch.normal(mu, np.sqrt(sigma))
+
+            simulated_data_given_pair.append(simulated_y.numpy().reshape((1,-1)))
+
+        total_time= time.time()- t1
+        print("Total execution time: %s\n"%total_time)
+        
+        simulated_data_arr= np.concatenate(simulated_data_given_pair, axis=0)
+        simulated_data_arr= np.clip(simulated_data_arr, -10, 10)
+        return simulated_data_arr
+
+    @staticmethod
+    def init_priors(prior_dict={"default":dist.Normal(0., 316.)}):
+        """
+        Input
+        -------
+
+
+
+        Output
+        --------
+        """
+        prior_dict["names"]= prior_dict.get("names") if prior_dict.get("names") else ["beta0", "beta1", "beta2", "beta3", "sigma"]
+        if not prior_dict.get("default"):
+            raise Exception("pass a deafault distribution to key 'default' for parameters ['beta0', 'beta1', 'beta2', 'beta3']}")
+        prior_list = []
+        [prior_list.append(prior_dict.get(param, prior_dict.get("default"))) for param in prior_dict.get("names")];
+        return prior_list
+
+    @staticmethod
+    def get_prior_samples(num_samples=1100, **kwargs):
+        """
+        Input
+        -------
+
+
+
+        Output
+        --------
+        """
+        prior_samples={}
+        for param, param_prior in kwargs.items():
+            sample_list = list(map(lambda k: pyro.sample(param, param_prior).item(), range(num_samples)))
+            prior_samples[param]=sample_list
+        return prior_samples
+    
+    @staticmethod
+    def simulate_observations_given_prior_posterior_pairs(original_data, prior_simulations= None, **kwargs):
+        """
+        Input
+        -------
+
+
+
+        Output
+        --------
+        """
+        flag = "posterior" if prior_simulations is not None else "prior"
+        for idx, content in enumerate(kwargs.items()):
+            model_name, samples_dict = content
+            print("___________\n\nFor model '%s' %s"%(model_name, flag))
+            parameters_pairs = list(zip(*list(samples_dict.values())))
+            print("total samples count:", len(parameters_pairs), " sample example: ", parameters_pairs[:2])
+            simulated_arr= base.simulate_observations_given_param(parameters_pairs)# shaped (1100, 21)
+            
+        
+        # obs_y_with_original_data_df = plot_y_violin(simulated_arr, original_data, prior_simulations = prior_simulations)
+        obs_y_with_original_data_df = base.plot_y_violin(simulated_arr, original_data, prior_simulations = prior_simulations)
+
+        return simulated_arr, obs_y_with_original_data_df
+
+    @staticmethod
+    def pyro_pystan_chain_intermixing(fit_df_A, fit_df_B):
+        sns.set_style("darkgrid")
+
+        all_params_chains_df = pd.DataFrame()
+        parameters = list(set(fit_df_A.columns)- {"chain"})# All params names
+        chains_pyro_pystan = list(fit_df_A["chain"].unique())# All chain_names
+
+        for param in parameters:
+            fig= plt.figure(figsize=(10,10))
+            all_chains_df= pd.DataFrame()
+            print("\nFor pyro_parameter: %s & pystan_parameter: %s"%(param, param))
+            for chain in chains_pyro_pystan:
+                all_chains_df_a = pd.DataFrame({"chain":"pyro_%s"%chain,
+                                            param:fit_df_A[fit_df_A["chain"]==chain][param].tolist()})
+                plt.plot(fit_df_A[fit_df_A["chain"]==chain][param], label="pyro_%s"%chain)
+
+                all_chains_df_b = pd.DataFrame({"chain":"pystan_%s"%chain,
+                                            param:fit_df_B[fit_df_B["chain"]==chain][param].tolist()})
+                plt.plot(fit_df_B[fit_df_B["chain"]==chain][param], label="pystan_%s"%chain)# Plots pystan chain
+                all_chains_df =pd.concat([all_chains_df, all_chains_df_a, all_chains_df_b], axis=0)
+            all_params_chains_df= pd.concat([all_params_chains_df, all_chains_df], axis=1)
+
+            plt.legend()
+            plt.title("Sampled values for %s"%(param))
+            plt.show()
+
+        return all_params_chains_df
+
+    @staticmethod
+    def pyro_pystan_param_histograms(parameter= "beta0", **kwargs):
+        fit_A_B_combined= pd.DataFrame()
+        for method, fit_df in kwargs.items():
+            fit_df["method"] = method
+            fit_A_B_combined= pd.concat([fit_A_B_combined, fit_df])
+        
+        fit_A_B_combined= fit_A_B_combined[["chain", parameter, "method"]]
+        fig = px.histogram(fit_A_B_combined, x=parameter, color="method", marginal="rug", # can be `box`, `violin`
+                            hover_data=fit_A_B_combined.columns)
+        fig.update_layout(title_text="Histogram comparison between %s for parameter '%s'"%(list(kwargs.keys()), parameter))
+        fig.show()
+
+
         
