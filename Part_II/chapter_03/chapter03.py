@@ -23,6 +23,7 @@ from pyro.infer import MCMC, NUTS
 import plotly
 import plotly.express as px
 import plotly.figure_factory as ff
+from plotly.subplots import make_subplots
 from statsmodels.graphics.tsaplots import plot_acf
 from statsmodels.tsa.stattools import acf, pacf
 import plotly.graph_objects as go
@@ -550,7 +551,7 @@ class base(object):
             for param, groupdf in obs_y_df.groupby("parameters"):
                 index = param+1
                 groupdf["parameters"] = "day_%s"%(index)
-                groupdf= groupdf.append({"parameters":"day_%s *"%(index), "values":Y[param].item()}, ignore_index=True)
+                groupdf= groupdf.append({"parameters":"day_%s *"%(index), "values":original_obs[param].item()}, ignore_index=True)
                 obs_y_with_original_data_df = pd.concat([obs_y_with_original_data_df, groupdf])
         
         note_text+=", 'day_X *' corresponds to the original observations for N-th day."
@@ -564,7 +565,7 @@ class base(object):
                         yaxis_title=ylabel, legend_title="Observation palette")
         fig.show()
 
-    return obs_y_with_original_data_df
+        return obs_y_with_original_data_df
 
 
     @staticmethod
@@ -580,7 +581,8 @@ class base(object):
         """
         t1= time.time()
         simulated_data_given_pair = []
-        
+
+        X1, X2, X3, Y = base.load_data()
         for parameters in parameter_pair_list:
             beta0, beta1, beta2, beta3, sigma= parameters
 
@@ -682,6 +684,7 @@ class base(object):
             plt.legend()
             plt.title("Sampled values for %s"%(param))
             plt.show()
+        all_params_chains_df= all_params_chains_df.loc[:,~all_params_chains_df.columns.duplicated()]
 
         return all_params_chains_df
 
