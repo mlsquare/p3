@@ -1,4 +1,4 @@
-# Probabilitic Programming
+# Probabilistic Programming
  __using Pyro, Stan, PyMC__
  
 ------
